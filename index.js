@@ -11,7 +11,7 @@ const BUSDT_ABI = require("./abi/busdt_abi.json");
 const USDT_ABI = require("./abi/usdt_abi.json");
 const BNB_ABI = require("./abi/bnb_abi.json");
 
-const Wallet = require('./models/Wallet.js');
+const Wallet = require('./models/wallet.js');
 const Web3 = require("web3");
 const axios = require('axios');
 
