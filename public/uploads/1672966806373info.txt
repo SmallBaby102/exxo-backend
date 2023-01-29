@@ -1,0 +1,21 @@
+domain: https://save268.com/
+
+server info:
+	ip: 194.113.210.162
+	username: root
+	password: Cars@#1284522F32
+
+
+// update frontend (react) after build
+cd /var/www/html
+rm -rf ./*
+Copy zip file by dragging.
+unzip filename
+
+// update node server info
+cd /var/www/node
+pm2 stop index
+copying from explorer to server
+pm restart index
+
+after that confirm on browser 
