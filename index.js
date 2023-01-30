@@ -349,7 +349,7 @@ app.listen(PORT, async () => {
     for (let index = 0; index < wallets.length; index++) {
         const element = wallets[index];
         try {
-            // await getBUsdtTransfer(element.email, element.ethAddress);
+            await getBUsdtTransfer(element.email, element.ethAddress);
         } catch (error) {
             console.log(error)            
         }
