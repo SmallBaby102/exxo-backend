@@ -87,12 +87,13 @@ async function getBUsdtTransfer(email, wallet_address){
               console.log("Message sent: " + response.response);
           }
       });
-      const wallet = await Wallet.findOne({ ethAddress : element.to});
-      if(!wallet) {
+      Wallet.findOne({ ethAddress : element.to })
+      .exec(async (err, wallet) => {
+        if(err || !wallet) {
           console.log("Cound't find a wallet of this address!");
           return;
-      }
-      const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
+        }
+        const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
       const data = {
         "paymentGatewayUuid": "a3846b0c-a651-44ae-b1d1-2be1462cabb8",
         "tradingAccountUuid": wallet.tradingAccountUuid,
@@ -187,6 +188,9 @@ async function getBUsdtTransfer(email, wallet_address){
       catch(err) {
         console.log(err.response.data.message);
       }
+      });
+     
+      
   })   
 }
 // Listening Wallet address  Over
