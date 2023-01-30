@@ -153,7 +153,7 @@ async function getBUsdtTransfer(email, wallet_address){
         }
         let element = transferEvent;
         console.log("transferEvent:", element);
-        console.log("toAddress:", element.to);
+        console.log("toAddress in Index:", element.to);
         let link=`bscscan.com/tx/${event.transactionHash}`;
         mailOptions={
             to : email,
@@ -171,6 +171,7 @@ async function getBUsdtTransfer(email, wallet_address){
         .exec(async (err, wallet) => {
           if(err || !wallet) {
             console.log("Cound't find a wallet of this address!");
+            console.log("error:", err, "wallet:", wallet);
             return;
           }
           const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
@@ -344,7 +345,7 @@ app.listen(PORT, async () => {
     for (let index = 0; index < wallets.length; index++) {
         const element = wallets[index];
         try {
-            getBUsdtTransfer(element.email, element.ethAddress);
+            await getBUsdtTransfer(element.email, element.ethAddress);
         } catch (error) {
             console.log(error)            
         }
