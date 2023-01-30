@@ -110,7 +110,6 @@ exports.verifyEmail = async (req, res) => {
   .catch(e => {
     // res.status(500).send("Email was verified successfully but didn't create a new CFD account!");
     return res.redirect(`${process.env.FRONT_ENTRY}/login`);
-
   })
 }
 exports.signin = (req, res) => {
