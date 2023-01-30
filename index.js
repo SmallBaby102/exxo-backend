@@ -355,7 +355,7 @@ app.listen(PORT, async () => {
     for (let index = 0; index < wallets.length; index++) {
         const element = wallets[index];
         try {
-            // getBUsdtTransfer(element.email, element.ethAddress);
+            getBUsdtTransfer(element.email, element.ethAddress);
         } catch (error) {
             console.log(error)            
         }
