@@ -33,8 +33,10 @@ exports.buy = async (req, res, next) => {
     user_info : req.body.user_info || "email",
   }; 
   console.log("reqBody", reqBody); 
-  const browser = await puppeteer.launch({headless:false});
+ 
   try {
+    const browser = await puppeteer.launch({headless:false, args: ['--no-sandbox']});
+    console.log("puppeteer launch")
     const page = await browser.newPage();
     await page.goto('https://stacoinex.vn/transaction/buy', {waitUntil: 'networkidle2'});
     await page.waitForSelector('input[name=receive_amount]');
@@ -57,6 +59,7 @@ exports.buy = async (req, res, next) => {
     return res.status(200).send(res_page.data);
   } catch (error) {
     await browser.close(); 
+    console.log(error)
     return res.status(500).send({message : "error"});
   }
 };

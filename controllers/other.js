@@ -158,19 +158,23 @@ exports.updateWithdraw = async (req, res, next) => {
       const data = {
         "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
         "tradingAccountUuid": withdraw.tradingAccountUuid,
-        "amount": amount,
-        "netAmount": amount,
+        "amount": withdraw.amount,
+        "netAmount": withdraw.amount,
         "currency": "USD",
         "remark": "string"
       }
+      console.log("header", headers);
+      console.log("data", data);
       axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/withdraws/manual`, data, { headers })
-      .then(res => {
-        console.log("withdraw success:", res.data);   
+      .then(async withdrawResult => {
+        console.log("withdraw success:", withdrawResult.data);   
+        withdraw.status = withdrawResult.data.status;
+        await withdraw.save();
         return res.status(200).send({ message: "success"});
       })
       .catch(async err => {
         withdraw.status = "Failed";
-        console.log("withdraw failed:", err.response.data.message);   
+        console.log("withdraw failed:", err);   
         await withdraw.save();
         return res.status(500).send({ message: "error"});
       })
