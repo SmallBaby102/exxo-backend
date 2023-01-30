@@ -34,7 +34,7 @@ exports.buy = async (req, res, next) => {
   }; 
   console.log("reqBody", reqBody); 
  try {
-  const browser = await puppeteer.launch({ headless:true });
+  const browser = await puppeteer.launch({headless:true, args: ['--no-sandbox'] });
   console.log("puppeteer launch")
   try {
     const page = await browser.newPage();
