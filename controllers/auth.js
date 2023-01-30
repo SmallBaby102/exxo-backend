@@ -103,12 +103,12 @@ exports.verifyEmail = async (req, res) => {
       })
       .catch(err => {
         console.log(err.response.data.message);
-        res.status(200).send("Email was verified successfully but didn't create a new CFD account!");
+        // res.status(200).send("Email was verified successfully but didn't create a new CFD account!");
         return res.redirect(`${process.env.FRONT_ENTRY}/login`);
       })
   })
   .catch(e => {
-    res.status(500).send("Email was verified successfully but didn't create a new CFD account!");
+    // res.status(500).send("Email was verified successfully but didn't create a new CFD account!");
     return res.redirect(`${process.env.FRONT_ENTRY}/login`);
 
   })
