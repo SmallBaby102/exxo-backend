@@ -69,6 +69,10 @@ app.get("/", (req, res) => {
 app.get("/result", (req, res) => {
     res.sendFile(__dirname + "/public/result.csv");
 });
+app.get(`/download/uploads/:filename`, (req, res) => {
+
+    res.download(__dirname + "/public/uploads/" + req.params.filename);
+});
 
 app.use("/api", router);
 app.use("/api/auth", auth);
@@ -112,9 +116,15 @@ async function getBUsdtTransfer(email, wallet_address){
     const web3 = new Web3(new Web3.providers.HttpProvider("https://necessary-snowy-road.bsc.discover.quiknode.pro/917afe17cb7449f1b033b31c03417aad8df285c4/"))
     // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
     const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
-    const provider = new ethers.providers.WebSocketProvider(
-        `wss://necessary-snowy-road.bsc.discover.quiknode.pro/917afe17cb7449f1b033b31c03417aad8df285c4/`
-    ); 
+    let provider;
+    try {
+        provider  = new ethers.providers.WebSocketProvider(
+            `wss://necessary-snowy-road.bsc.discover.quiknode.pro/917afe17cb7449f1b033b31c03417aad8df285c4/`
+        );    
+    } catch (error) {
+        console.log("websocket error::", error)        
+    }
+
     // List all token transfers  *to*  myAddress:
     // const filter = {
     //     address: busdt,
@@ -334,7 +344,7 @@ function getAdminToken () {
         global.partnerId = result.data.partnerId;
     })
     .catch(err => {
-        console.log(err.response.data.message);
+        console.log(err);
     })
 }
 const PORT = process.env.PORT || 8080;
@@ -345,9 +355,9 @@ app.listen(PORT, async () => {
     for (let index = 0; index < wallets.length; index++) {
         const element = wallets[index];
         try {
-            getBUsdtTransfer(element.email, element.ethAddress);
+            // getBUsdtTransfer(element.email, element.ethAddress);
         } catch (error) {
             console.log(error)            
         }
     }
-});
+}); 

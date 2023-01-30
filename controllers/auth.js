@@ -96,8 +96,10 @@ exports.verifyEmail = async (req, res) => {
           }
         } 
       axios.post(`${process.env.API_SERVER}/documentation/process/api/accounts`, data, { headers } )
-      .then(accountRes => {
-        res.redirect(`${process.env.FRONT_ENTRY}/login`);
+      .then(async accountRes => {
+        user.accountUuid = accountRes.accountUuid;
+        await user.save();
+        return res.redirect(`${process.env.FRONT_ENTRY}/login`);
       })
       .catch(err => {
         console.log(err.response.data.message);

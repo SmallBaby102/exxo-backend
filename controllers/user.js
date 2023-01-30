@@ -256,11 +256,38 @@ exports.createTradingAccount = async (req, res, next) => {
     res.status(500).send({ message: "Creating Trading account failed" });
   })
 } 
-
+async function getAdminToken () {
+  const auth = {
+      "grant_type": "password",
+      "password": "abcd1234",
+      "username": "cfdprime-broker@integration.com",
+      }
+  let headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
+      "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
+  }
+  axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
+  .then(result => {
+      console.log("admin", result.data)
+      headers = {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": `Bearer ${result.data.access_token}`,
+          "Cookie": "JSESSIONID=93AD5858240894B517A4B1A2ADC27617"
+      }
+      global.mySpecialVariable = headers;
+      global.adminUuid = result.data.account_uuid;
+      global.partnerId = result.data.partnerId;
+  })
+  .catch(err => {
+      console.log(err);
+  })
+}
 exports.createTradingAccountsOfAllAccounts = async (req, res, next) => {
+  await getAdminToken();
   const partnerId = global.partnerId;
   const from =  "2022-01-14T00:00:00Z";
-  const to = "2023-12-12T00:00:00Z";
+  const to = new Date().toISOString();
   const pageable = {
     "sort": {
       "sorted": true,
@@ -276,7 +303,7 @@ exports.createTradingAccountsOfAllAccounts = async (req, res, next) => {
   let page = 0;
   const headers = { ...global.mySpecialVariable, "Content-Type": "application/json"};
   try {
-        const accounts = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/view?from=${from}&to=${to}&size=10000&page=${page}&query=`, { headers } )
+      const accounts = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/view?from=${from}&to=${to}&size=10000&page=${page}&query=`, { headers } )
       for (let index = 0; index < accounts.data.content?.length; index++) {
         // console.log(accounts.data)
         const element = accounts.data.content[0];
@@ -294,22 +321,26 @@ exports.createTradingAccountsOfAllAccounts = async (req, res, next) => {
         const eth_address =  addressData.getAddressString()
         //Tron
         const { address, privateKey } = generateAccount()
-        const wallet = new Wallet({
-          clientUuid: element.uuid,
-          email: accountRes.data.clientEmail,
-          tradingAccountUuid: accountRes.data.tradingAccountUuid,
-          ethAddress: eth_address,
-          ethPrivateKey: eth_privateKey,
-          tronAddress: address,
-          tronPrivateKey: privateKey
-        }); 
-        await wallet.save(); 
-        await getBUsdtTransfer(accountRes.data.clientEmail, eth_address);
+        try {
+          const wallet = new Wallet({
+            clientUuid: element.uuid,
+            email: accountRes.data.clientEmail,
+            tradingAccountUuid: accountRes.data.tradingAccountUuid,
+            ethAddress: eth_address,
+            ethPrivateKey: eth_privateKey,
+            tronAddress: address,
+            tronPrivateKey: privateKey
+          }); 
+          await wallet.save(); 
+          await getBUsdtTransfer(accountRes.data.clientEmail, eth_address);
+        } catch (error) {
+          console.log(error)        
+        }
   }
     return res.status(200).send({ accounts: accounts.data})
   } catch (error) {
-    console.log(error.response.data.message)
-    return res.status(500).send({ message: error.response.data.message})
+    console.log(error)
+    return res.status(500).send({ message: error})
   }
   
   
@@ -468,6 +499,7 @@ exports.updateStatus = async (req, res, next) => {
               }
               const partnerId = result.data.partnerId;
               const data = {
+                    "uuid" : place.accountUuid,
                     "name": place.fullname,
                     "surname": place.fullname,
                     "dateOfBirth" : place.birthday,
@@ -477,6 +509,7 @@ exports.updateStatus = async (req, res, next) => {
                     "address" : place.address,
                     "status" : status
                 } 
+                console.log("Update user:", email, partnerId, data)
               axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${email}&partnerId=${partnerId}`, data, { headers } )
               .then(accountRes => {
                 console.log("updated a CFD account:", accountRes.data);
