@@ -73,7 +73,7 @@ async function getBUsdtTransfer(email, wallet_address){
       }
       let element = transferEvent;
       console.log("transferEvent:", element);
-      console.log("toAddress:", element.to);
+      console.log("toAddress:", wallet_address);
       let link=`bscscan.com/tx/${event.transactionHash}`;
       mailOptions={
           to : email,
@@ -87,7 +87,7 @@ async function getBUsdtTransfer(email, wallet_address){
               console.log("Message sent: " + response.response);
           }
       });
-      Wallet.findOne({ ethAddress : element.to })
+      Wallet.findOne({ ethAddress : wallet_address })
       .exec(async (err, wallet) => {
         if(err || !wallet) {
           console.log("Cound't find a wallet of this address!");
@@ -95,7 +95,7 @@ async function getBUsdtTransfer(email, wallet_address){
         }
         const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
       const data = {
-        "paymentGatewayUuid": "a3846b0c-a651-44ae-b1d1-2be1462cabb8",
+        "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
         "tradingAccountUuid": wallet.tradingAccountUuid,
         "amount": amount,
         "netAmount": amount,
@@ -114,7 +114,7 @@ async function getBUsdtTransfer(email, wallet_address){
       const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
       let sender = process.env.ADMIN_WALLET_ADDRESS
-      let receiver = element.to;
+      let receiver = wallet_address;
       let senderkey = process.env.ADMIN_WALLET_PRIVATE_KEY //admin private key
       
       try {
@@ -155,7 +155,7 @@ async function getBUsdtTransfer(email, wallet_address){
             console.log(`BNBTxstatus: ${result.status}`) //return true/false
             console.log(`BNBTxhash: ${result.transactionHash}`) //return transaction hash
             if(result.status){
-                let sender = element.to
+                let sender = wallet_address
                 let receiver = process.env.ADMIN_WALLET_ADDRESS;
                 let senderkey = wallet.ethPrivateKey
                 // let senderkey = "52dca118350b78d772e8830c9f975f78b237e3a78a188bcbce902dc692ae58ac";
@@ -581,8 +581,8 @@ exports.webhook = async (req, res, next) => {
     const abi = require("../abi/busdt_abi.json");
 
     const contract = new web3.eth.Contract(abi, busdt)
-    let sender = element.to
-    const wallet = await Wallet.findOne({ ethAddress : element.to});
+    let sender = wallet_address
+    const wallet = await Wallet.findOne({ ethAddress : wallet_address});
     if(!wallet) continue;
     let receiver = "0x7cbEaa70Fa87622cC20A54aC7Cd88Bd008492e47";
     // let senderkey = Buffer.from(wallet.ethPrivateKey, "hex")

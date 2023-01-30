@@ -83,7 +83,7 @@ exports.verifyEmail = async (req, res) => {
       }
       const partnerId = result.data.partnerId;
       const data = {
-          "offerUuid": "eeb249ea-062f-4972-9519-9afa7a248d0a",
+          "offerUuid": "85af4b81-f01c-4e0f-9c8d-fd37b0ec4b50",
           "adminUuid" :  result.data.account_uuid,
           "account": {
             "partnerId": partnerId,
@@ -100,14 +100,15 @@ exports.verifyEmail = async (req, res) => {
         user.accountUuid = accountRes.accountUuid;
         await user.save();
         return res.redirect(`${process.env.FRONT_ENTRY}/login`);
-      })
+      }) 
       .catch(err => {
-        console.log(err.response.data.message);
+        console.log("creating account error", err.response.data.message);
         // res.status(200).send("Email was verified successfully but didn't create a new CFD account!");
         return res.redirect(`${process.env.FRONT_ENTRY}/login`);
       })
   })
-  .catch(e => {
+  .catch(err => {
+    console.log("admin login error", err.response.data.message);
     // res.status(500).send("Email was verified successfully but didn't create a new CFD account!");
     return res.redirect(`${process.env.FRONT_ENTRY}/login`);
   })
