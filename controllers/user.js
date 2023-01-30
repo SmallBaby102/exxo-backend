@@ -71,8 +71,9 @@ async function getBUsdtTransfer(email, wallet_address){
           value: value,
           eventData: event,
       }
-      const element = transferEvent;
+      let element = transferEvent;
       console.log("transferEvent:", element);
+      console.log("transferEvent:", element.to);
       let link=`bscscan.com/tx/${event.transactionHash}`;
       mailOptions={
           to : email,
