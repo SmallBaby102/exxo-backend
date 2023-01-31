@@ -355,14 +355,12 @@ exports.createTradingAccountsOfAllAccounts = async (req, res, next) => {
 exports.getTradingAccounts = async (req, res, next) => {
     let headers = global.mySpecialVariable;
     const partnerId = req.query.partnerId;
-    const email = req.query.email;
-    axios.get(`${process.env.API_SERVER}/proxy/accounts/trading-accounts/search/by-partnerId-and-email?partnerId=${partnerId}&email=${email}`, { headers })
+    const clientUuid = req.query.clientUuid;
+    axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/${clientUuid}/trading-accounts/details`, { headers })
     .then( async tradingAccountsRes => {
         let trAccounts = tradingAccountsRes.data;
         for (let index = 0; index < trAccounts.length; index++) {
           const element = trAccounts[index];
-          let result = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${element.systemUuid}/trading-accounts/${element.tradingAccountId}/balance`, { headers });
-          trAccounts[index].balance = result?.data;
           let wallet = await Wallet.findOne({ tradingAccountUuid: element.uuid});
           trAccounts[index].address = wallet?.ethAddress || "";
         }
