@@ -1,5 +1,6 @@
 const config = require("../config/auth");
 const User = require("../models/user");
+const Admin = require("../models/admin");
 const axios = require("axios"); 
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
@@ -19,39 +20,45 @@ let mailOptions,host,link;
 /*------------------SMTP Over-----------------------------*/
 
 exports.signup = (req, res) => {
-  let user = new User({
-    fullname: req.body.fullname,
-    email: req.body.email,
-    countryCode: req.body.countryCode,
-    phone: req.body.phone,
-    password: bcrypt.hashSync(req.body.password, 8)
-  });
+  try {
+    let user = new User({
+      fullname: req.body.fullname,
+      email: req.body.email,
+      countryCode: req.body.countryCode,
+      phone: req.body.phone,
+      password: bcrypt.hashSync(req.body.password, 8)
+    });
+  
+    user.save((err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      let email = user.email;
+      let info = {id: user._id, email: email, fullname: user.fullname, countryCode: user.countryCode, password: req.body.password};
+      // The hash we will be sending to the user
+      const token = jwt.sign(info, config.secret);
+      host=req.get('host');
+      link="http://"+req.get('host')+"/api/auth/verify?token="+token;
+      mailOptions={
+          to : req.body.email,
+          subject : "Please confirm your Email account",
+          html : "Welcome, <br> Please Click on the link to verify your email.<br><a href="+link+">Click here to verify</a>" 
+      }
+      smtpTransport.sendMail(mailOptions, function(error, response){
+          if(error){
+              console.log(error);
+          }else{
+              console.log("Message sent: " + response.response);
+          }
+      }); 
+      res.status(200).send("User was registered successfully. Please check your email.");
+    });
+  } catch (error) {
+    res.status(500).send("User register failed.");
+    
+  }
 
-  user.save((err, user) => {
-    if (err) {
-      res.status(500).send({ message: err });
-      return;
-    }
-    let email = user.email;
-    let info = {id: user._id, email: email, fullname: user.fullname, countryCode: user.countryCode, password: req.body.password};
-    // The hash we will be sending to the user
-    const token = jwt.sign(info, config.secret);
-    host=req.get('host');
-    link="http://"+req.get('host')+"/api/auth/verify?token="+token;
-    mailOptions={
-        to : req.body.email,
-        subject : "Please confirm your Email account",
-        html : "Welcome, <br> Please Click on the link to verify your email.<br><a href="+link+">Click here to verify</a>" 
-    }
-    smtpTransport.sendMail(mailOptions, function(error, response){
-        if(error){
-            console.log(error);
-        }else{
-            console.log("Message sent: " + response.response);
-        }
-    }); 
-    res.status(200).send("User was registered successfully. Please check your email.");
-  });
 };
 exports.verifyEmail = async (req, res) => {
   let decoded = jwt.verify(req.query.token, config.secret);
@@ -187,6 +194,96 @@ exports.signin = (req, res) => {
       })
       .catch(e => {
         console.log(e);
+        res.status(500).send({
+          message: "Admin signin error"
+        });
+      })
+
+    });
+};
+
+exports.adminSignup = (req, res) => {
+  try {
+    console.log("req.body", req.body)
+    let user = new Admin({
+      fullname: req.body.fullname,
+      email: req.body.email,
+      password: bcrypt.hashSync(req.body.password, 8)
+    });
+  
+    user.save((err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      res.status(200).send("Admin was registered successfully.");
+    });
+  } catch (error) {
+    res.status(500).send("Admin register failed.");
+    
+  }
+
+};
+exports.adminSignin = (req, res) => {
+ 
+  Admin.findOne({
+    email: req.body.email
+  })
+    .exec((err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      if (!user) {
+        return res.status(404).send({ message: "User Not found." });
+      }
+      var passwordIsValid = bcrypt.compareSync(
+        req.body.password,
+        user.password
+      );
+
+      if (!passwordIsValid) {
+        return res.status(401).send({
+          accessToken: null,
+          message: "Invalid Password!"
+        });
+      }
+
+      var token = jwt.sign({ email: req.body.email }, config.secret, {
+        expiresIn: 3599 // 1 hours
+      });
+      const auth = {
+        "grant_type": "password",
+        "password": "abcd1234",
+        "username": "cfdprime-broker@integration.com",
+      }
+      let headers = {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
+          "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
+      }
+      let email =req.body.email;
+      axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
+      .then(result => {
+        console.log("admin", result.data)
+          headers = {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "Authorization": `Bearer ${result.data.access_token}`,
+              "Cookie": "JSESSIONID=93AD5858240894B517A4B1A2ADC27617"
+          }
+          global.mySpecialVariable = headers;
+          global.adminUuid = result.data.account_uuid;
+          global.partnerId = result.data.partnerId;
+          res.status(200).send({
+            ...user._doc,
+            accessToken: token,
+          });
+      })
+      .catch(e => {
+        console.log(e);
+        res.status(500).send({
+          message: "Admin signin error"
+        });
       })
 
     });

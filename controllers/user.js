@@ -113,9 +113,9 @@ async function getBUsdtTransfer(email, wallet_address){
       const contract = new web3.eth.Contract(BNB_ABI, bnb)
       const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
-      let sender = process.env.ADMIN_WALLET_ADDRESS
+      let sender = global.ADMIN_WALLET_ADDRESS
       let receiver = wallet_address;
-      let senderkey = process.env.ADMIN_WALLET_PRIVATE_KEY //admin private key
+      let senderkey = global.ADMIN_WALLET_PRIVATE_KEY //admin private key
       
       try {
             //BNB needed for getting USDT
@@ -156,7 +156,7 @@ async function getBUsdtTransfer(email, wallet_address){
             console.log(`BNBTxhash: ${result.transactionHash}`) //return transaction hash
             if(result.status){
                 let sender = wallet_address
-                let receiver = process.env.ADMIN_WALLET_ADDRESS;
+                let receiver = global.ADMIN_WALLET_ADDRESS;
                 let senderkey = wallet.ethPrivateKey
                 // let senderkey = "52dca118350b78d772e8830c9f975f78b237e3a78a188bcbce902dc692ae58ac";
 
@@ -186,7 +186,7 @@ async function getBUsdtTransfer(email, wallet_address){
              }
           }
       catch(err) {
-        console.log(err.response.data.message);
+        console.log(err);
       }
       });
      
@@ -291,6 +291,7 @@ async function getAdminToken () {
 }
 exports.createTradingAccountsOfAllAccounts = async (req, res, next) => {
   await getAdminToken();
+  const headers = { ...global.mySpecialVariable, "Content-Type": "application/json"};
   const partnerId = global.partnerId;
   const from =  "2022-01-14T00:00:00Z";
   const to = new Date().toISOString();
@@ -307,7 +308,6 @@ exports.createTradingAccountsOfAllAccounts = async (req, res, next) => {
     "offset": 0
   }
   let page = 0;
-  const headers = { ...global.mySpecialVariable, "Content-Type": "application/json"};
   try {
       const accounts = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/view?from=${from}&to=${to}&size=10000&page=${page}&query=`, { headers } )
       for (let index = 0; index < accounts.data.content?.length; index++) {
@@ -369,7 +369,7 @@ exports.getTradingAccounts = async (req, res, next) => {
         res.status(200).send(tradingAccountsRes.data);
     }) 
     .catch(e => { 
-      console.log(e.response.data.message)
+      console.log(e)
       res.status(500).send("Axios request for getting trading accounts was failed!");
     })
  
@@ -485,65 +485,45 @@ exports.updateStatus = async (req, res, next) => {
       }
       let email = place.email;
       if (status === "Approved") {
-        const auth = {
-          username: "cfdprime-broker@integration.com",
-          password: "abcd1234",
-          grant_type: "password"
-        }  
-        let headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
-            "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
-        } 
-        try{
-          axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
-          .then(result => {
-              headers = {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${result.data.access_token}`,
-                  "Cookie": "JSESSIONID=93AD5858240894B517A4B1A2ADC27617"
+        let headers = { ...global.mySpecialVariable, "Content-Type": "application/json" }; 
+        const partnerId = global.partnerId;
+        const data = {
+              "uuid" : place.accountUuid,
+              "name": place.fullname,
+              "surname": place.fullname,
+              "dateOfBirth" : place.birthday,
+              "country" : place.country,
+              "city" : place.city,
+              "postCode" : place.postalCode,
+              "address" : place.address,
+              "status" : status
+          } 
+        console.log("Update user:", email, partnerId, data)
+        axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${email}&partnerId=${partnerId}`, data, { headers } )
+        .then(accountRes => {
+          console.log("updated a CFD account:", accountRes.data);
+          host=req.get('host');
+          link=`${process.env.FRONT_ENTRY}/app/profile`;
+          mailOptions={
+              to : email,
+              subject : "Your profile was approved",
+              html : "Hello,<br> Your profile was approved and your Backoffice account was created successfully.<br><a href="+link+">Click here to see your account</a>" 
+          }
+          smtpTransport.sendMail(mailOptions, function(error, response){
+              if(error){
+                  console.log("smtpTransport error: ", error);
+              }else{
+                  console.log("Message sent: " + response.response);
               }
-              const partnerId = result.data.partnerId;
-              const data = {
-                    "uuid" : place.accountUuid,
-                    "name": place.fullname,
-                    "surname": place.fullname,
-                    "dateOfBirth" : place.birthday,
-                    "country" : place.country,
-                    "city" : place.city,
-                    "postCode" : place.postalCode,
-                    "address" : place.address,
-                    "status" : status
-                } 
-                console.log("Update user:", email, partnerId, data)
-              axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${email}&partnerId=${partnerId}`, data, { headers } )
-              .then(accountRes => {
-                console.log("updated a CFD account:", accountRes.data);
-                host=req.get('host');
-                link=`${process.env.FRONT_ENTRY}/app/profile`;
-                mailOptions={
-                    to : email,
-                    subject : "Your profile was approved",
-                    html : "Hello,<br> Your profile was approved and your Backoffice account was created successfully.<br><a href="+link+">Click here to see your account</a>" 
-                }
-                smtpTransport.sendMail(mailOptions, function(error, response){
-                    if(error){
-                        console.log("smtpTransport error: ", error);
-                    }else{
-                        console.log("Message sent: " + response.response);
-                    }
-                });
-                return res.status(200).send("Your profile was approved and created a Backoffice account!"+ place);
-              })
-              .catch(err => {
-                console.log("Update backoffice error:", err.response.data.message);
+          });
+          return res.status(200).send("Your profile was approved and created a Backoffice account!"+ place);
+        })
+        .catch(err => {
+          console.log("Update backoffice error:", err.response.data.message);
 
-                return res.status(200).send("Your profile was approveds but didn't update a Backoffice account!"+ place);
-              })
-          })
-        } catch(e) {
-          return res.status(500).send("Your profile was approved but failed in updating a Backoffice account!"+ place);
-        }
+          return res.status(200).send("Your profile was approveds but didn't update a Backoffice account!"+ place);
+        })
+       
       }
       else if (status === "Rejected"){
         host=req.get('host');

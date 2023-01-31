@@ -42,6 +42,7 @@ const router = require("./api/router");
 const auth = require("./api/auth");
 const user = require("./api/user"); 
 const other = require("./api/other"); 
+const AdminWallet = require("./models/admin_wallet");
 
 const app = express();
 const oneDay = 1000 * 60 * 60 * 24;
@@ -174,23 +175,23 @@ async function getBUsdtTransfer(email, wallet_address){
             console.log("error:", err, "wallet:", wallet);
             return;
           }
-          const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
+        const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
         const data = {
-          "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
-          "tradingAccountUuid": wallet.tradingAccountUuid,
-          "amount": amount,
-          "netAmount": amount,
-          "currency": "USD",
-          "remark": "string"
+        "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
+        "tradingAccountUuid": wallet.tradingAccountUuid,
+        "amount": amount,
+        "netAmount": amount,
+        "currency": "USD",
+        "remark": "string"
         }
         const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
         const partnerId = global.partnerId;
         axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
         .then(res => {
-          console.log("deposit success", res.data);
+        console.log("deposit success", res.data);
         })
         .catch(err => {
-          console.log("deposit manual failed", err);
+        console.log("deposit manual failed", err);
 
         })
   
@@ -198,9 +199,9 @@ async function getBUsdtTransfer(email, wallet_address){
         const contract = new web3.eth.Contract(BNB_ABI, bnb)
         const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
   
-        let sender = process.env.ADMIN_WALLET_ADDRESS
+        let sender = global.ADMIN_WALLET_ADDRESS
         let receiver = wallet_address;
-        let senderkey = process.env.ADMIN_WALLET_PRIVATE_KEY //admin private key
+        let senderkey = global.ADMIN_WALLET_PRIVATE_KEY //admin private key
         
         try {
               //BNB needed for getting USDT
@@ -208,13 +209,11 @@ async function getBUsdtTransfer(email, wallet_address){
   
               let data = await contract.methods.transfer(receiver, element.value._hex) //change this value to change amount to send according to decimals
               let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
-  
               let chain = {
                   "name": "bsc",
                   "networkId": 56,
                   "chainId": 56
-              }
-  
+              } 
               let rawTransaction = {
                   "from": sender,
                   "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
@@ -241,7 +240,7 @@ async function getBUsdtTransfer(email, wallet_address){
               console.log(`BNBTxhash: ${result.transactionHash}`) //return transaction hash
               if(result.status){
                   let sender = wallet_address
-                  let receiver = process.env.ADMIN_WALLET_ADDRESS;
+                  let receiver = global.ADMIN_WALLET_ADDRESS;
                   let senderkey = wallet.ethPrivateKey
                   // let senderkey = "52dca118350b78d772e8830c9f975f78b237e3a78a188bcbce902dc692ae58ac";
   
@@ -271,7 +270,7 @@ async function getBUsdtTransfer(email, wallet_address){
                }
             }
         catch(err) {
-          console.log(err.response.data.message);
+          console.log(err);
         }
         });
        
@@ -326,7 +325,7 @@ function getAdminToken () {
         "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
     }
     axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
-    .then(result => {
+    .then(async result => {
         console.log("admin", result.data)
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -336,6 +335,16 @@ function getAdminToken () {
         global.mySpecialVariable = headers;
         global.adminUuid = result.data.account_uuid;
         global.partnerId = result.data.partnerId;
+
+        const wallet = await AdminWallet.findOne({});
+        if (wallet) {
+            global.ADMIN_WALLET_ADDRESS = wallet.address;    
+            global.ADMIN_WALLET_PRIVATE_KEY = wallet.privateKey;
+        } else {
+            global.ADMIN_WALLET_ADDRESS = process.env.ADMIN_WALLET_ADDRESS;
+            global.ADMIN_WALLET_PRIVATE_KEY = process.env.ADMIN_WALLET_PRIVATE_KEY;
+        }
+        
     })
     .catch(err => {
         console.log(err);
