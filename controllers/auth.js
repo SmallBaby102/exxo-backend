@@ -142,7 +142,7 @@ exports.signin = (req, res) => {
       }
 
       var token = jwt.sign({ email: req.body.email }, config.secret, {
-        expiresIn: 86400 // 24 hours
+        expiresIn: 3599 // 1 hours
       });
       const auth = {
         "grant_type": "password",
