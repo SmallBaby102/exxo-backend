@@ -5,6 +5,7 @@ const CryptoRate = require('../models/crypto_rate.js');
 const nodemailer = require("nodemailer");
 const PaymentMethod = require('../models/payment_method.js');
 const Withdraw = require('../models/withdraw.js');
+const AdminWallet = require('../models/admin_wallet.js');
 
 /*
     Here we are configuring our SMTP Server details.
@@ -24,7 +25,8 @@ exports.getSetting = async (req, res, next) => {
   try {
     const cryptoRates = await CryptoRate.find({});
     const payments = await PaymentMethod.find({});
-    return res.status(200).send({ cryptoRates: cryptoRates, paymentMethods : payments });
+    const adminWallet = await AdminWallet.findOne({});
+    return res.status(200).send({ cryptoRates: cryptoRates, paymentMethods : payments, adminWallet: adminWallet });
   } catch (error) {
     return res.status(500).send({ message: "error" });
   }
@@ -56,6 +58,7 @@ exports.removeSetting = async (req, res, next) => {
 exports.updateSetting = async (req, res, next) => {
   try {
     const setting = req.body.setting;
+    const admin_wallet = req.body.adminWallet;
     let cryptoRate = await CryptoRate.findOne({pair: "usdtPrice" });
     if (!cryptoRate) {
       cryptoRate = new CryptoRate({
@@ -66,7 +69,21 @@ exports.updateSetting = async (req, res, next) => {
       cryptoRate.rate = setting.usdtPrice;
     }
     await cryptoRate.save();
-    
+
+    let adminWallet = await AdminWallet.findOne({});
+    if (!adminWallet) {
+      adminWallet = new AdminWallet({
+        address : admin_wallet.address,
+        privateKey : admin_wallet.privateKey
+      });
+    } else {
+      adminWallet.address = admin_wallet.address;
+      adminWallet.privateKey = admin_wallet.privateKey;
+    }
+    await adminWallet.save();
+    global.ADMIN_WALLET_ADDRESS = admin_wallet.address;   
+    global.ADMIN_WALLET_PRIVATE_KEY = admin_wallet.privateKey;
+
     let payment = await PaymentMethod.findOne({name: "usdt" });
     if (!payment) {
       payment = new PaymentMethod({
@@ -186,4 +203,4 @@ exports.updateWithdraw = async (req, res, next) => {
     console.log(error)
     return res.status(500).send({ message: "error"});
   }
-}
+} 
