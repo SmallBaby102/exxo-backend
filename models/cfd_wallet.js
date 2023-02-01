@@ -1,12 +1,12 @@
 const mongoose = require("mongoose");
 
-const Wallet = mongoose.model(
-  "Wallet",
+const CFDWallet = mongoose.model(
+  "CFDWallet",
   new mongoose.Schema({
     clientUuid: String,
     email: String,
-    tradingAccountUuid: String,
     tradingAccountId: String,
+    tradingAccountUuid: String,
     ethAddress: String,
     ethPrivateKey: String,
     tronAddress: String,
@@ -15,4 +15,4 @@ const Wallet = mongoose.model(
   })
 );
 
-module.exports = Wallet;
+module.exports = CFDWallet;
