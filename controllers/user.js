@@ -311,8 +311,9 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
   }
   let page = 0;
   try {
-      const accounts = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/view?from=${from}&to=${to}&size=10000&page=${page}&query=`, { headers } )
-      for (let index = 0; index < accounts.data.content?.length; index++) {
+      while(true){
+        const accounts = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/view?from=${from}&to=${to}&size=1000&page=${page}&query=`, { headers } )
+        for (let index = 0; index < accounts.data.content?.length; index++) {
         const element = accounts.data.content[index];
         const data = {
           "offerUuid": req.body.offerUuid,
@@ -358,6 +359,11 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
         }
        
       }
+        if (!accounts.data || page >= (accounts.data.totalPages - 1)) {
+                break;
+        }
+        page++;
+      }
       return res.status(200).send({ accounts: accounts.data})
   } catch (error) {
     console.log(error)
@@ -392,7 +398,6 @@ exports.createWalletOfAllTradingAccountsCFDPrime = async (req, res, next) => {
       let page = 0;
       try {
         while(true){
-
             const accounts = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/view?from=${from}&to=${to}&size=1000&page=${page}&query=`, { headers } )
             for (let index = 0; index < accounts.data.content?.length; index++) {
               const element = accounts.data.content[index];
