@@ -25,6 +25,7 @@ mongoose.connect(`${process.env.DB_URL}/${process.env.DB_NAME}`, [], (err) => {
         console.log(`DB connected at ${process.env.DB_URL}/${process.env.DB_NAME}`);
     }
 });
+
 /*
     Here we are configuring our SMTP Server details.
     STMP is mail server which is responsible for sending and recieving email.
@@ -144,6 +145,7 @@ async function getBUsdtTransfer(email, wallet_address){
  // })
  const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
  const myfilter = contract.filters.Transfer(null, wallet_address)
+ console.log("to", wallet_address)
  contract.on(myfilter, async (from, to, value, event)=>{
      let transferEvent ={
          from: from,
@@ -174,12 +176,12 @@ async function getBUsdtTransfer(email, wallet_address){
          console.log("error:", err, "wallet:", wallet);
          return;
        }
-     const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
+     const deposit_amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
      const data = {
      "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
      "tradingAccountUuid": wallet.tradingAccountUuid,
-     "amount": amount,
-     "netAmount": amount,
+     "amount": deposit_amount,
+     "netAmount": deposit_amount,
      "currency": "USD",
      "remark": "string"
      }
@@ -204,15 +206,17 @@ async function getBUsdtTransfer(email, wallet_address){
      
      try {
            //BNB needed for getting USDT
-           let gas = await usdtContract.methods.transfer(sender, element.value._hex).estimateGas({from: receiver});
+           const balance = await usdtContract.methods.balanceOf(receiver).call();
+           const amount =  web3.utils.toHex(balance);
+           let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
 
-           let data = await contract.methods.transfer(receiver, element.value._hex) //change this value to change amount to send according to decimals
+           let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
            let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
            let chain = {
                "name": "bsc",
                "networkId": 56,
                "chainId": 56
-           } 
+           }
            let rawTransaction = {
                "from": sender,
                "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
@@ -244,7 +248,7 @@ async function getBUsdtTransfer(email, wallet_address){
                // let senderkey = "52dca118350b78d772e8830c9f975f78b237e3a78a188bcbce902dc692ae58ac";
 
                // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
-               let data = await usdtContract.methods.transfer(receiver, element.value._hex) //change this value to change amount to send according to decimals
+               let data = await usdtContract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
                let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
                let rawTransaction = {
                    "from": sender,
@@ -278,42 +282,6 @@ async function getBUsdtTransfer(email, wallet_address){
         console.log(err)
     }
   }
-async function getUsdtTransfer(){
-    const web3 = (new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/v3/7bf5d938412c4462a81d59e1d24e776e")))
-    let wallet_addresses = ["0x7cbEaa70Fa87622cC20A54aC7Cd88Bd008492e47"];
-    const usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7"; ///USDT Contract
-    const provider = new ethers.providers.WebSocketProvider(
-        `wss://mainnet.infura.io/ws/v3/7bf5d938412c4462a81d59e1d24e776e`
-    );
-    // List all token transfers  *to*  myAddress:
-    const filter = {
-        address: usdtAddress,
-        topics: [
-            ethers.utils.id("Transfer(address,address,uint256)"),
-            null,
-            [
-                ethers.utils.id(wallet_addresses[0], 32),
-                ethers.utils.id(wallet_addresses[0], 32),
-            ]
-        ]
-    };
-    provider.on(filter, (log) => {
-        web3.eth.getTransaction(log.transactionHash, function (error, result){
-            console.log(result);
-        });
-        // Emitted whenever a DAI token transfer occurs
-    })
-    // const contract = new ethers.Contract(usdtAddress, USDT_ABI, provider);
-    // contract.on("Transfer", (from, to, value, event)=>{
-    //     let transferEvent ={
-    //         from: from,
-    //         to: to,
-    //         value: value,
-    //         eventData: event,
-    //     }
-    //     console.log(JSON.stringify(transferEvent, null, 4))
-    // })
-}
 function getAdminToken () {
     const auth = {
         "grant_type": "password",

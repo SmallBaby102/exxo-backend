@@ -343,7 +343,7 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
                   ethPrivateKey: eth_privateKey,
                   tronAddress: address,
                   tronPrivateKey: privateKey
-                }); 
+                });
               } else {
                 wallet.ethAddress = eth_address;
                 wallet.ethPrivateKey = eth_privateKey;
