@@ -145,7 +145,6 @@ async function getBUsdtTransfer(email, wallet_address){
  // })
  const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
  const myfilter = contract.filters.Transfer(null, wallet_address)
- console.log("to", wallet_address)
  contract.on(myfilter, async (from, to, value, event)=>{
      let transferEvent ={
          from: from,
