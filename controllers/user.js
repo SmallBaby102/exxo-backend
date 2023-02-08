@@ -33,11 +33,11 @@ async function getBUsdtTransfer(email, wallet_address){
   const Common = require('ethereumjs-common');
   const Tx = require('ethereumjs-tx')
   // const web3 = (new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/")))
-  const web3 = new Web3(new Web3.providers.HttpProvider("https://necessary-snowy-road.bsc.discover.quiknode.pro/917afe17cb7449f1b033b31c03417aad8df285c4/"))
+  const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
   // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
   const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
   const provider = new ethers.providers.WebSocketProvider(
-      `wss://necessary-snowy-road.bsc.discover.quiknode.pro/917afe17cb7449f1b033b31c03417aad8df285c4/`
+      `wss://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/`
   ); 
   // List all token transfers  *to*  myAddress:
   // const filter = {
@@ -322,7 +322,7 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
         } 
         let headers = global.mySpecialVariable;
         const accountRes = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/${element.uuid}/trading-accounts/details`, { headers });
-        console.log("got trading accounts:", accountRes.data);
+        console.log("got trading accounts of element.email:", accountRes.data);
         for (let index = 0; index < accountRes.data?.length; index++) {
           const trAccount = accountRes.data[index];
           let addressData = ethWallet.generate();
@@ -344,6 +344,9 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
                   tronAddress: address,
                   tronPrivateKey: privateKey
                 });
+                setTimeout(() => {
+                  getBUsdtTransfer(element.email, eth_address);
+                }, 2000 * index / 20);
               } else {
                 wallet.ethAddress = eth_address;
                 wallet.ethPrivateKey = eth_privateKey;
@@ -351,9 +354,7 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
                 wallet.tronPrivateKey = privateKey;
               }
             await wallet.save(); 
-            setTimeout(() => {
-              getBUsdtTransfer(element.email, eth_address);
-            }, 2000 * index / 5);
+            
           } catch (error) {
             console.log(error)        
           }
@@ -430,6 +431,7 @@ exports.changePassword = async (req, res, next) => {
           partnerId,
           newValue: newPassword
         }
+        let headers = global.mySpecialVariable;
         axios.post(`${process.env.API_SERVER}/documentation/auth/api/user/change-password`, data, { headers })
         .then( async res => {
             res.status(200).send({ message: "Successfully changed" });
