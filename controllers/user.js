@@ -347,13 +347,8 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
                 setTimeout(() => {
                   getBUsdtTransfer(element.email, eth_address);
                 }, 2000 * index / 20);
-              } else {
-                wallet.ethAddress = eth_address;
-                wallet.ethPrivateKey = eth_privateKey;
-                wallet.tronAddress = address;
-                wallet.tronPrivateKey = privateKey;
-              }
-            await wallet.save(); 
+              } 
+              await wallet.save(); 
             
           } catch (error) {
             console.log(error)        
@@ -431,12 +426,13 @@ exports.changePassword = async (req, res, next) => {
           partnerId,
           newValue: newPassword
         }
-        let headers = global.mySpecialVariable;
+        let headers = { ...global.mySpecialVariable, "Content-Type": "application/json" }; 
         axios.post(`${process.env.API_SERVER}/documentation/auth/api/user/change-password`, data, { headers })
-        .then( async res => {
+        .then( async result => {
             res.status(200).send({ message: "Successfully changed" });
         }) 
         .catch(e => { 
+          console.log(e)
           res.status(500).send({ message: "Axios request for changing Backoffice password was failed!" });
         })
       });

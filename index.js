@@ -3,6 +3,7 @@ const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
+const handlebars = require('handlebars');
 const mongoose = require("mongoose");
 const Moralis = require("moralis").default;
 const Chains = require("@moralisweb3/common-evm-utils");
@@ -15,7 +16,9 @@ const Wallet = require('./models/wallet.js');
 const Web3 = require("web3");
 const axios = require('axios');
 const Common = require('ethereumjs-common');
-const Tx = require('ethereumjs-tx')
+const Tx = require('ethereumjs-tx');
+const { readHTMLFile } = require("./utils/helper.js");
+
 require("dotenv").config();
 
 mongoose.connect(`${process.env.DB_URL}/${process.env.DB_NAME}`, [], (err) => {
@@ -321,10 +324,36 @@ function getAdminToken () {
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT} .`);
+    // readHTMLFile(__dirname + '/public/Verify_email.html', function(err, html) {
+    //     if (err) {
+    //       console.log('error reading file', err);
+    //       return;
+    //     }
+    //     var template = handlebars.compile(html);
+    //     var replacements = {
+    //       VERIFY_LINK: "link",
+    //     };
+    //     var htmlToSend = template(replacements);
+    //     var mailOptions = {
+    //         to : "smallbaby102@outlook.com",
+    //         subject : "Please confirm your account",
+    //         html : htmlToSend
+    //     };
+    //     smtpTransport.sendMail(mailOptions, function(error, response){
+    //         if(error){
+    //             console.log(error);
+    //         }else{
+    //             console.log("Message sent: " + response.response);
+    //         }
+    //     });
+    //   });
     getAdminToken()
     let wallets = await Wallet.find({});
     for (let index = 0; index < wallets.length; index++) {
         const element = wallets[index];
+         if (!element.ethAddress || !element.email) {
+            continue;
+        }
         try {
             setTimeout(() =>{ getBUsdtTransfer(element.email, element.ethAddress)}, 2000 * Math.floor(index / 20));
         } catch (error) {

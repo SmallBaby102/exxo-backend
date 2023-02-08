@@ -39,18 +39,29 @@ exports.signup = (req, res) => {
       // The hash we will be sending to the user
       const token = jwt.sign(info, config.secret);
       link="http://secure.exxomarkets.com/api/auth/verify?token="+token;
-      mailOptions={
-          to : req.body.email,
-          subject : "Please confirm your Email account",
-          html : "Welcome, <br> Please Click on the link to verify your email.<br><a href="+link+">Click here to verify</a>" 
-      }
-      smtpTransport.sendMail(mailOptions, function(error, response){
-          if(error){
-              console.log(error);
-          }else{
-              console.log("Message sent: " + response.response);
-          }
-      }); 
+      readHTMLFile(__dirname + '/../public/Verify_email.html', function(err, html) {
+        if (err) {
+          console.log('error reading file', err);
+          return;
+        }
+        var template = handlebars.compile(html);
+        var replacements = {
+          VERIFY_LINK: link,
+        };
+        var htmlToSend = template(replacements);
+        var mailOptions = {
+            to : req.body.email,
+            subject : "Please confirm your account",
+            html : htmlToSend
+        };
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.response);
+            }
+        });
+      });
       res.status(200).send("User was registered successfully. Please check your email.");
     });
   } catch (error) {
