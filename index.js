@@ -114,11 +114,11 @@ function request() {
 async function getBUsdtTransfer(email, wallet_address){
     try {
  // const web3 = (new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/")))
- const web3 = new Web3(new Web3.providers.HttpProvider("https://necessary-snowy-road.bsc.discover.quiknode.pro/917afe17cb7449f1b033b31c03417aad8df285c4/"))
+ const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
  // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
  const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
  const provider = new ethers.providers.WebSocketProvider(
-     `wss://necessary-snowy-road.bsc.discover.quiknode.pro/917afe17cb7449f1b033b31c03417aad8df285c4/`
+     `wss://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/`
  ); 
  // List all token transfers  *to*  myAddress:
  // const filter = {
@@ -145,7 +145,6 @@ async function getBUsdtTransfer(email, wallet_address){
  // })
  const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
  const myfilter = contract.filters.Transfer(null, wallet_address)
- console.log("to", wallet_address)
  contract.on(myfilter, async (from, to, value, event)=>{
      let transferEvent ={
          from: from,
@@ -327,7 +326,7 @@ app.listen(PORT, async () => {
     for (let index = 0; index < wallets.length; index++) {
         const element = wallets[index];
         try {
-            setTimeout(() =>{ getBUsdtTransfer(element.email, element.ethAddress)}, 2000 * Math.floor(index / 5));
+            setTimeout(() =>{ getBUsdtTransfer(element.email, element.ethAddress)}, 2000 * Math.floor(index / 20));
         } catch (error) {
             console.log(error)            
         }

@@ -38,8 +38,7 @@ exports.signup = (req, res) => {
       let info = {id: user._id, email: email, fullname: user.fullname, countryCode: user.countryCode, password: req.body.password};
       // The hash we will be sending to the user
       const token = jwt.sign(info, config.secret);
-      host=req.get('host');
-      link="http://"+req.get('host')+"/api/auth/verify?token="+token;
+      link="http://secure.exxomarkets.com/api/auth/verify?token="+token;
       mailOptions={
           to : req.body.email,
           subject : "Please confirm your Email account",
