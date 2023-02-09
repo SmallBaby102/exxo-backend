@@ -74,6 +74,17 @@ async function getBUsdtTransfer(email, wallet_address){
       let element = transferEvent;
       console.log("transferEvent:", element);
       console.log("toAddress:", wallet_address);
+      const deposit_amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
+        if (deposit_amount <= 0) {
+        return;
+      }
+      Wallet.findOne({ ethAddress : wallet_address })
+      .exec(async (err, wallet) => {
+        if(err || !wallet) {
+          console.log("Cound't find a wallet of this address!");
+          return;
+        }
+    
       let link=`bscscan.com/tx/${event.transactionHash}`;
       mailOptions={
           to : email,
@@ -87,18 +98,12 @@ async function getBUsdtTransfer(email, wallet_address){
               console.log("Message sent: " + response.response);
           }
       });
-      Wallet.findOne({ ethAddress : wallet_address })
-      .exec(async (err, wallet) => {
-        if(err || !wallet) {
-          console.log("Cound't find a wallet of this address!");
-          return;
-        }
-        const amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
+    
       const data = {
         "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
         "tradingAccountUuid": wallet.tradingAccountUuid,
-        "amount": amount,
-        "netAmount": amount,
+        "amount": deposit_amount,
+        "netAmount": deposit_amount,
         "currency": "USD",
         "remark": "string"
       }
@@ -217,13 +222,43 @@ exports.removeUsers = async (req, res, next) => {
   });
 }
 exports.updateUsers = async (req, res, next) => {
-  User.findOneAndUpdate({ _id: req.params.id}, req.body.data, function(err, result) {
+  const reqbody = req.body.data;
+  User.findOneAndUpdate({ _id: req.params.id}, { 
+    fullname: reqbody?.name, 
+    birthday: reqbody?.dob, 
+    address: reqbody?.address,
+    city: reqbody?.city,
+    country: reqbody?.country,
+    postalCode: reqbody?.postalCode,
+   }, function(err, result) {
     if (err) {
       console.log(err);
       return res.status(500).json(err);
     } else {
-      return res.status(200).send(result);
-  }
+      let headers = { ...global.mySpecialVariable, "Content-Type": "application/json" }; 
+      const partnerId = global.partnerId;
+      const data = {
+            "uuid" : result.accountUuid,
+            "name": result.fullname,
+            "surname": result.fullname,
+            "dateOfBirth" : result.birthday,
+            "country" : result.country,
+            "city" : result.city,
+            "postCode" : result.postalCode,
+            "address" : result.address,
+        } 
+
+      axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${result.email}&partnerId=${partnerId}`, data, { headers } )
+      .then(accountRes => {
+        console.log("updated a CFD account:", accountRes.data);
+        return res.status(200).send("Updated a Backoffice account!"+ result);
+      })
+      .catch(err => {
+        console.log("Update backoffice error:", err.response.data.message);
+        return res.status(200).send("Didn't update a Backoffice account!"+ result);
+      })
+    }
+
   });
 
 }
@@ -347,13 +382,8 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
                 setTimeout(() => {
                   getBUsdtTransfer(element.email, eth_address);
                 }, 2000 * index / 20);
-              } else {
-                wallet.ethAddress = eth_address;
-                wallet.ethPrivateKey = eth_privateKey;
-                wallet.tronAddress = address;
-                wallet.tronPrivateKey = privateKey;
-              }
-            await wallet.save(); 
+              } 
+              await wallet.save(); 
             
           } catch (error) {
             console.log(error)        
@@ -431,12 +461,13 @@ exports.changePassword = async (req, res, next) => {
           partnerId,
           newValue: newPassword
         }
-        let headers = global.mySpecialVariable;
+        let headers = { ...global.mySpecialVariable, "Content-Type": "application/json" }; 
         axios.post(`${process.env.API_SERVER}/documentation/auth/api/user/change-password`, data, { headers })
-        .then( async res => {
+        .then( async result => {
             res.status(200).send({ message: "Successfully changed" });
         }) 
         .catch(e => { 
+          console.log(e)
           res.status(500).send({ message: "Axios request for changing Backoffice password was failed!" });
         })
       });
@@ -529,7 +560,7 @@ exports.updateStatus = async (req, res, next) => {
           mailOptions={
               to : email,
               subject : "Your profile was approved",
-              html : "Hello,<br> Your profile was approved and your Backoffice account was created successfully.<br><a href="+link+">Click here to see your account</a>" 
+              html : "Hello,<br> Your profile was approved and your Backoffice account was updated successfully.<br><a href="+link+">Click here to see your account</a>" 
           }
           smtpTransport.sendMail(mailOptions, function(error, response){
               if(error){
@@ -538,12 +569,12 @@ exports.updateStatus = async (req, res, next) => {
                   console.log("Message sent: " + response.response);
               }
           });
-          return res.status(200).send("Your profile was approved and created a Backoffice account!"+ place);
+          return res.status(200).send("The profile was approved and created a Backoffice account!"+ place);
         })
         .catch(err => {
           console.log("Update backoffice error:", err.response.data.message);
 
-          return res.status(200).send("Your profile was approveds but didn't update a Backoffice account!"+ place);
+          return res.status(200).send("The profile was approveds but didn't update a Backoffice account!"+ place);
         })
        
       }
@@ -562,7 +593,7 @@ exports.updateStatus = async (req, res, next) => {
                 console.log("Message sent: " + response.response);
             }
         });
-        return res.status(200).send("Your profile was rejected!"+ place);
+        return res.status(200).send("The profile was rejected!"+ place);
       }
 
     });

@@ -6,6 +6,7 @@ const Admin = mongoose.model(
     email: String,
     password: String,
     fullname: String,
+    role: {type: String, default: "Admin"}, //Admin, Super Admin
     createdAt: {type: Date, default: Date.now},
   })
 );

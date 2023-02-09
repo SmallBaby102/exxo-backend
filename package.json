@@ -30,6 +30,7 @@
     "express-session": "^1.17.3",
     "finnhub": "^1.2.16",
     "fs": "0.0.1-security",
+    "handlebars": "^4.7.7",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.2.9",
     "moralis": "^2.11.0",
