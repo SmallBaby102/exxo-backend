@@ -158,19 +158,10 @@ async function getBUsdtTransfer(email, wallet_address){
      let element = transferEvent;
      console.log("transferEvent:", element);
      console.log("toAddress in Index:", wallet_address);
-     let link=`bscscan.com/tx/${event.transactionHash}`;
-     mailOptions={
-         to : email,
-         subject : "Your deposit was succeeded",
-         html : "Hello,<br> You made a new deposit successfully.<br><a href="+link+">Click here to see your transaction</a>" 
+     const deposit_amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
+     if (deposit_amount <= 0) {
+         return;
      }
-     smtpTransport.sendMail(mailOptions, function(error, response){
-         if(error){
-             console.log(error);
-         }else{
-             console.log("Message sent: " + response.response);
-         }
-     });
      Wallet.findOne({ ethAddress : wallet_address })
      .exec(async (err, wallet) => {
        if(err || !wallet) {
@@ -178,34 +169,48 @@ async function getBUsdtTransfer(email, wallet_address){
          console.log("error:", err, "wallet:", wallet);
          return;
        }
-     const deposit_amount = web3.utils.fromWei(web3.utils.hexToNumberString(element.value._hex), "ether");
-     const data = {
-     "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
-     "tradingAccountUuid": wallet.tradingAccountUuid,
-     "amount": deposit_amount,
-     "netAmount": deposit_amount,
-     "currency": "USD",
-     "remark": "string"
-     }
-     const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
-     const partnerId = global.partnerId;
-     axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
-     .then(res => {
-     console.log("deposit success", res.data);
-     })
-     .catch(err => {
-     console.log("deposit manual failed", err);
+       
+        let link=`bscscan.com/tx/${event.transactionHash}`;
+        mailOptions={
+            to : email,
+            subject : "Your deposit was succeeded",
+            html : "Hello,<br> You made a new deposit successfully.<br><a href="+link+">Click here to see your transaction</a>" 
+        }
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.response);
+            }
+        });
+        
+        const data = {
+        "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
+        "tradingAccountUuid": wallet.tradingAccountUuid,
+        "amount": deposit_amount,
+        "netAmount": deposit_amount,
+        "currency": "USD",
+        "remark": "string"
+        }
+        const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
+        const partnerId = global.partnerId;
+        axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
+        .then(res => {
+        console.log("deposit success", res.data);
+        })
+        .catch(err => {
+        console.log("deposit manual failed", err);
 
-     })
+        })
 
-     const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
-     const contract = new web3.eth.Contract(BNB_ABI, bnb)
-     const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
+        const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
+        const contract = new web3.eth.Contract(BNB_ABI, bnb)
+        const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
-     let sender = global.ADMIN_WALLET_ADDRESS
-     let receiver = wallet_address;
-     let senderkey = global.ADMIN_WALLET_PRIVATE_KEY //admin private key
-     
+        let sender = global.ADMIN_WALLET_ADDRESS
+        let receiver = wallet_address;
+        let senderkey = global.ADMIN_WALLET_PRIVATE_KEY //admin private key
+        
      try {
            //BNB needed for getting USDT
            const balance = await usdtContract.methods.balanceOf(receiver).call();
@@ -329,9 +334,11 @@ app.listen(PORT, async () => {
     //       console.log('error reading file', err);
     //       return;
     //     }
+    //     let  link="https://secure.exxomarkets.com/api/auth/verify?token="+"token";
+
     //     var template = handlebars.compile(html);
     //     var replacements = {
-    //       VERIFY_LINK: "link",
+    //       VERIFY_LINK: link,
     //     };
     //     var htmlToSend = template(replacements);
     //     var mailOptions = {

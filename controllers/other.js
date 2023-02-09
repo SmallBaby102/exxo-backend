@@ -6,6 +6,7 @@ const nodemailer = require("nodemailer");
 const PaymentMethod = require('../models/payment_method.js');
 const Withdraw = require('../models/withdraw.js');
 const AdminWallet = require('../models/admin_wallet.js');
+const Wallet = require('../models/wallet.js');
 
 /*
     Here we are configuring our SMTP Server details.
@@ -27,6 +28,14 @@ exports.getSetting = async (req, res, next) => {
     const payments = await PaymentMethod.find({});
     const adminWallet = await AdminWallet.findOne({});
     return res.status(200).send({ cryptoRates: cryptoRates, paymentMethods : payments, adminWallet: adminWallet });
+  } catch (error) {
+    return res.status(500).send({ message: "error" });
+  }
+}
+exports.getWallets = async (req, res, next) => {
+  try {
+    const wallets = await Wallet.find({});
+    return res.status(200).send(wallets);
   } catch (error) {
     return res.status(500).send({ message: "error" });
   }

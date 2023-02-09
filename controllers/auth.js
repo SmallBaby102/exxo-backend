@@ -38,7 +38,7 @@ exports.signup = (req, res) => {
       let info = {id: user._id, email: email, fullname: user.fullname, countryCode: user.countryCode, password: req.body.password};
       // The hash we will be sending to the user
       const token = jwt.sign(info, config.secret);
-      link="http://secure.exxomarkets.com/api/auth/verify?token="+token;
+      link="https://secure.exxomarkets.com/api/auth/verify?token="+token;
       readHTMLFile(__dirname + '/../public/Verify_email.html', function(err, html) {
         if (err) {
           console.log('error reading file', err);
