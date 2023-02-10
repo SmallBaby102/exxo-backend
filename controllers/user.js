@@ -6,9 +6,12 @@ var bcrypt = require("bcryptjs");
 var User = require('../models/user.js');
 const Wallet = require('../models/wallet.js');
 const nodemailer = require("nodemailer");
+const handlebars = require('handlebars');
+
 const Web3 = require("web3");
 const Chains = require("@moralisweb3/common-evm-utils");
 const ethers = require("ethers");
+const { readHTMLFile } = require("../utils/helper.js");
 
 const BUSDT_ABI = require("../abi/busdt_abi.json");
 const USDT_ABI = require("../abi/usdt_abi.json");
@@ -25,7 +28,6 @@ let smtpTransport = nodemailer.createTransport({
       pass: process.env.MAIL_PASSWORD
   }
 });
-let mailOptions,host,link;
 /*------------------SMTP Over-----------------------------*/
 
 // Listening Wallet address 
@@ -85,22 +87,32 @@ async function getBUsdtTransfer(email, wallet_address){
           return;
         }
     
-      let link=`bscscan.com/tx/${event.transactionHash}`;
-      mailOptions={
-          to : email,
-          subject : "Your deposit was succeeded",
-          html : "Hello,<br> You made a new deposit successfully.<br><a href="+link+">Click here to see your transaction</a>" 
-      }
-      smtpTransport.sendMail(mailOptions, function(error, response){
-          if(error){
-              console.log(error);
-          }else{
-              console.log("Message sent: " + response.response);
+        readHTMLFile(__dirname + '/../public/email_template/Deposit_succeed.html', function(err, html) {
+          if (err) {
+            console.log('error reading file', err);
+            return;
           }
-      });
+          var template = handlebars.compile(html);
+          var replacements = {
+            AMOUNT: deposit_amount,
+          };
+          var htmlToSend = template(replacements);
+          var mailOptions = {
+              to : req.body.email,
+              subject : "Your deposit was succeeded",
+              html : htmlToSend
+          };
+          smtpTransport.sendMail(mailOptions, function(error, response){
+              if(error){
+                  console.log(error);
+              }else{
+                  console.log("Message sent: " + response.response);
+              }
+          });
+        });
     
       const data = {
-        "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
+        "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
         "tradingAccountUuid": wallet.tradingAccountUuid,
         "amount": deposit_amount,
         "netAmount": deposit_amount,
@@ -291,7 +303,30 @@ exports.createTradingAccount = async (req, res, next) => {
     }); 
     await wallet.save(); 
     await getBUsdtTransfer(accountRes.data.clientEmail, eth_address);
-    res.status(200).send({ account: accountRes.data, message: "Trading account was created successfully!" });
+    readHTMLFile(__dirname + '/../public/email_template/Open_Live_account.html', function(err, html) {
+      if (err) {
+          console.log('error reading file', err);
+          return;
+      }
+      var template = handlebars.compile(html);
+      var replacements = {
+      };
+      var htmlToSend = template(replacements);
+      var mailOptions = {
+          from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+          to : email,
+          subject : "Your new account was created successfully!",
+          html : htmlToSend
+      };
+      smtpTransport.sendMail(mailOptions, function(error, response){
+          if(error){
+              console.log(error);
+          }else{
+              console.log("Message sent: " + response.response);
+          }
+      });
+    });
+    res.status(200).send({ account: accountRes.data, message: "Your new account was created successfully!" });
   }) 
   .catch(err => {
     console.log(err.response.data.message);
@@ -354,7 +389,7 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
           "partnerId": element.partnerId,
           "clientUuid" : element.uuid,
           "adminUuid" : global.adminUuid
-        } 
+        }  
         let headers = global.mySpecialVariable;
         const accountRes = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/${element.uuid}/trading-accounts/details`, { headers });
         console.log("got trading accounts of element.email:", accountRes.data);
@@ -514,6 +549,29 @@ exports.verifyProfile = async (req, res, next) => {
         res.status(500).send({ message: "User doesn't exist!" });
         return;
       }
+      readHTMLFile(__dirname + '/../public/email_template/KYC_RECEIVED.html', function(err, html) {
+        if (err) {
+            console.log('error reading file', err);
+            return;
+        }
+        var template = handlebars.compile(html);
+        var replacements = {
+        };
+        var htmlToSend = template(replacements);
+        var mailOptions = {
+            from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+            to : email,
+            subject : "We received your documents",
+            html : htmlToSend
+        };
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.response);
+            }
+        });
+      });
       res.status(200).send("Saved a profile!"+ place);
     });
 
@@ -551,24 +609,33 @@ exports.updateStatus = async (req, res, next) => {
               "address" : place.address,
               "status" : status
           } 
-        console.log("Update user:", email, partnerId, data)
-        axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${email}&partnerId=${partnerId}`, data, { headers } )
-        .then(accountRes => {
-          console.log("updated a CFD account:", accountRes.data);
-          host=req.get('host');
-          link=`${process.env.FRONT_ENTRY}/app/profile`;
-          mailOptions={
+        console.log("Update user:", email, partnerId, data);
+        readHTMLFile(__dirname + '/../public/email_template/KYC_APPROVED.html', function(err, html) {
+          if (err) {
+              console.log('error reading file', err);
+              return;
+          }
+          var template = handlebars.compile(html);
+          var replacements = {
+          };
+          var htmlToSend = template(replacements);
+          var mailOptions = {
+              from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
               to : email,
               subject : "Your profile was approved",
-              html : "Hello,<br> Your profile was approved and your Backoffice account was updated successfully.<br><a href="+link+">Click here to see your account</a>" 
-          }
+              html : htmlToSend
+          };
           smtpTransport.sendMail(mailOptions, function(error, response){
               if(error){
-                  console.log("smtpTransport error: ", error);
+                  console.log(error);
               }else{
                   console.log("Message sent: " + response.response);
               }
           });
+        });
+        axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${email}&partnerId=${partnerId}`, data, { headers } )
+        .then(accountRes => {
+          console.log("updated a CFD account:", accountRes.data);
           return res.status(200).send("The profile was approved and created a Backoffice account!"+ place);
         })
         .catch(err => {
@@ -579,20 +646,29 @@ exports.updateStatus = async (req, res, next) => {
        
       }
       else if (status === "Rejected"){
-        host=req.get('host');
-        link=`${process.env.FRONT_ENTRY}/app/profile`;
-        mailOptions={
-            to : email,
-            subject : "Your profile was rejected",
-            html : "Hello,<br> Your profile was rejected.<br><a href="+link+">Click here to see your account</a>" 
-        }
-        smtpTransport.sendMail(mailOptions, function(error, response){
-            if(error){
-                console.log("smtpTransport error:", error);
-            }else{
-                console.log("Message sent: " + response.response);
-            }
-        });
+        readHTMLFile(__dirname + '/../public/email_template/KYC_DECLINED.html', function(err, html) {
+          if (err) {
+              console.log('error reading file', err);
+              return;
+          }
+          var template = handlebars.compile(html);
+          var replacements = {
+          };
+          var htmlToSend = template(replacements);
+          var mailOptions = {
+              from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+              to : email,
+              subject : "Your profile was declined",
+              html : htmlToSend
+          };
+          smtpTransport.sendMail(mailOptions, function(error, response){
+              if(error){
+                  console.log(error);
+              }else{
+                  console.log("Message sent: " + response.response);
+              }
+          });
+      });
         return res.status(200).send("The profile was rejected!"+ place);
       }
 
