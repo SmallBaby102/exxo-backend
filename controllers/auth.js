@@ -83,6 +83,10 @@ exports.resetLink = (req, res) => {
         res.status(500).send({ message: err });
         return;
       }
+      if(!user){
+        res.status(404).send({ message: "User not found" });
+        return;
+      }
       let email = user.email;
       let info = { id: user._id, email: email };
       // The hash we will be sending to the user
