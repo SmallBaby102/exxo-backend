@@ -3,10 +3,18 @@ const axios = require('axios');
 const User = require('../models/user.js');
 const CryptoRate = require('../models/crypto_rate.js');
 const nodemailer = require("nodemailer");
+const handlebars = require('handlebars');
+
 const PaymentMethod = require('../models/payment_method.js');
 const Withdraw = require('../models/withdraw.js');
 const AdminWallet = require('../models/admin_wallet.js');
 const Wallet = require('../models/wallet.js');
+const { readHTMLFile } = require("../utils/helper.js");
+const Web3 = require("web3");
+const Common = require('ethereumjs-common');
+const Tx = require('ethereumjs-tx');
+const BUSDT_ABI = require("../abi/busdt_abi.json");
+
 
 /*
     Here we are configuring our SMTP Server details.
@@ -19,7 +27,6 @@ let smtpTransport = nodemailer.createTransport({
       pass: process.env.MAIL_PASSWORD
   }
 });
-let mailOptions,host,link;
 /*------------------SMTP Over-----------------------------*/
 
 exports.getSetting = async (req, res, next) => {
@@ -163,11 +170,12 @@ exports.updateWithdraw = async (req, res, next) => {
   try
   {
     const id = req.body.id;
-    const amount = req.body.amount;
+    let amount = req.body.amount;
+    let email = req.body.email;
     let withdraw = await Withdraw.findOne({ _id: id });
     if (!withdraw) {
       withdraw = new Withdraw({
-        email: req.body.email,
+        email: email,
         amount: amount,
         currency: "USD",
         tradingAccountId: req.body.tradingAccountId,
@@ -177,12 +185,14 @@ exports.updateWithdraw = async (req, res, next) => {
       return res.status(200).send({ message: "success"});
     } else {
       withdraw.status = req.body.status;
+      email = withdraw.email;
+      amount = withdraw.amount;
     }
     if(req.body.status === "Approved"){
       const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
       const partnerId = global.partnerId;
       const data = {
-        "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
+        "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
         "tradingAccountUuid": withdraw.tradingAccountUuid,
         "amount": withdraw.amount,
         "netAmount": withdraw.amount,
@@ -190,12 +200,83 @@ exports.updateWithdraw = async (req, res, next) => {
         "remark": "string"
       }
       console.log("header", headers);
-      console.log("data", data);
+      try {
+        const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
+        // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
+        const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
+        const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
+        let sender = global.ADMIN_WALLET_ADDRESS
+        let receiver = withdraw.address;
+        let senderkey = global.ADMIN_WALLET_PRIVATE_KEY;
+        let amount_hex = web3.utils.toHex(web3.utils.toWei(amount, 'ether'));;
+        // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
+        let data = await usdtContract.methods.transfer(receiver, amount_hex) //change this value to change amount to send according to decimals
+        let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+        let gas = await usdtContract.methods.transfer(receiver, amount_hex).estimateGas({from: sender});
+        let chain = {
+          "name": "bsc",
+          "networkId": 56,
+          "chainId": 56
+      }
+        let rawTransaction = {
+            "from": sender,
+            "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
+            "gasLimit": web3.utils.toHex(40000), //40000 gas limit
+            "gas": web3.utils.toHex(gas),
+            "to": busdt, //interacting with busdt contract
+            // "value": web3.utils.BN(web3.utils.toWei(element.value, 'ether')), //no need this value interacting with nopayable function of contract
+            "data": data.encodeABI(), //our transfer data from contract instance
+            "nonce": web3.utils.toHex(nonce)
+        };
+        const common1 = Common.default.forCustomChain(
+          'mainnet', chain,
+          'petersburg'
+      ) // declaring that our tx is on a custom chain, bsc chain
+
+        let transaction = new Tx.Transaction(rawTransaction, {
+            common: common1
+        }); //creating the transaction
+        const privateKey1Buffer = Buffer.from(senderkey, 'hex')
+        transaction.sign(privateKey1Buffer); //signing the transaction with private key
+
+        result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
+        console.log(`usdtTxstatus: ${result.status}`) //return true/false
+        console.log(`usdtTxhash: ${result.transactionHash}`) //return transaction hash
+
+      }
+      catch (err){
+        console.log("Withdraw transaction failed", err);
+      }      
       axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/withdraws/manual`, data, { headers })
       .then(async withdrawResult => {
         console.log("withdraw success:", withdrawResult.data);   
         withdraw.status = withdrawResult.data.status;
         await withdraw.save();
+        readHTMLFile(__dirname + '/../public/email_template/Withdraw_succeed.html', function(err, html) {
+          if (err) {
+              console.log('error reading file', err);
+              return;
+          }
+          var template = handlebars.compile(html);
+          var replacements = {
+            AMOUNT: amount,
+            TRADING_ACCOUNT_ID: withdraw.tradingAccountId
+          };
+          var htmlToSend = template(replacements);
+          var mailOptions = {
+              from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+              to : email,
+              subject : "Your withdraw was succeeded!",
+              html : htmlToSend
+          };
+          smtpTransport.sendMail(mailOptions, function(error, response){
+              if(error){
+                  console.log(error);
+              }else{
+                  console.log("Message sent: " + response.response);
+              }
+          });
+        });
         return res.status(200).send({ message: "success"});
       })
       .catch(async err => {
@@ -206,6 +287,34 @@ exports.updateWithdraw = async (req, res, next) => {
       })
     } else {
       await withdraw.save();
+      if (req.body.status === "Rejected") {
+        readHTMLFile(__dirname + '/../public/email_template/Withdraw_declined.html', function(err, html) {
+          if (err) {
+              console.log('error reading file', err);
+              return;
+          }
+          var template = handlebars.compile(html);
+          var replacements = {
+            AMOUNT: amount,
+            TRADING_ACCOUNT_ID: withdraw.tradingAccountId
+          };
+          var htmlToSend = template(replacements);
+          var mailOptions = {
+              from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+              to : email,
+              subject : "Your new account was declined!",
+              html : htmlToSend
+          };
+          smtpTransport.sendMail(mailOptions, function(error, response){
+              if(error){
+                  console.log(error);
+              }else{
+                  console.log("Message sent: " + response.response);
+              }
+          });
+        });
+      }
+   
       return res.status(200).send({ message: "success"});
     }
   } catch (error) {

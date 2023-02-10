@@ -5,6 +5,7 @@ const Withdraw = mongoose.model(
   new mongoose.Schema({
     email: String,
     amount: String,
+    address: String,
     currency: String,
     tradingAccountId: String,
     tradingAccountUuid: String,

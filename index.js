@@ -40,7 +40,6 @@ let smtpTransport = nodemailer.createTransport({
         pass: process.env.MAIL_PASSWORD
     }
 });
-let rand,mailOptions,host,link;
 /*------------------SMTP Over-----------------------------*/
 
 const router = require("./api/router");
@@ -170,22 +169,33 @@ async function getBUsdtTransfer(email, wallet_address){
          return;
        }
        
-        let link=`bscscan.com/tx/${event.transactionHash}`;
-        mailOptions={
-            to : email,
-            subject : "Your deposit was succeeded",
-            html : "Hello,<br> You made a new deposit successfully.<br><a href="+link+">Click here to see your transaction</a>" 
-        }
-        smtpTransport.sendMail(mailOptions, function(error, response){
-            if(error){
-                console.log(error);
-            }else{
-                console.log("Message sent: " + response.response);
+        readHTMLFile(__dirname + '/public/email_template/Deposit_succeed.html', function(err, html) {
+            if (err) {
+                console.log('error reading file', err);
+                return;
             }
+            var template = handlebars.compile(html);
+            var replacements = {
+                AMOUNT: deposit_amount,
+            };
+            var htmlToSend = template(replacements);
+            var mailOptions = {
+                from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+                to : req.body.email,
+                subject : "Your deposit was succeeded",
+                html : htmlToSend
+            };
+            smtpTransport.sendMail(mailOptions, function(error, response){
+                if(error){
+                    console.log(error);
+                }else{
+                    console.log("Message sent: " + response.response);
+                }
+            });
         });
         
         const data = {
-        "paymentGatewayUuid": "58d26ead-8ba4-4588-8caa-358937285f88",
+        "paymentGatewayUuid": process.env.paymentGatewayUuid,
         "tradingAccountUuid": wallet.tradingAccountUuid,
         "amount": deposit_amount,
         "netAmount": deposit_amount,

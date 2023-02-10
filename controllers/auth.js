@@ -5,6 +5,9 @@ const axios = require("axios");
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
+const { readHTMLFile } = require("../utils/helper.js");
+const handlebars = require('handlebars');
+
 /*
     Here we are configuring our SMTP Server details.
     STMP is mail server which is responsible for sending and recieving email.
@@ -16,7 +19,6 @@ let smtpTransport = nodemailer.createTransport({
       pass: process.env.MAIL_PASSWORD
   }
 });
-let mailOptions,host,link;
 /*------------------SMTP Over-----------------------------*/
 
 exports.signup = (req, res) => {
@@ -39,7 +41,7 @@ exports.signup = (req, res) => {
       // The hash we will be sending to the user
       const token = jwt.sign(info, config.secret);
       link="https://secure.exxomarkets.com/api/auth/verify?token="+token;
-      readHTMLFile(__dirname + '/../public/Verify_email.html', function(err, html) {
+      readHTMLFile(__dirname + '/../public/email_template/Verify_email.html', function(err, html) {
         if (err) {
           console.log('error reading file', err);
           return;
@@ -50,6 +52,7 @@ exports.signup = (req, res) => {
         };
         var htmlToSend = template(replacements);
         var mailOptions = {
+            from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : req.body.email,
             subject : "Please confirm your account",
             html : htmlToSend
@@ -70,6 +73,78 @@ exports.signup = (req, res) => {
   }
 
 };
+exports.resetLink = (req, res) => {
+  try {
+    User.findOne({
+      email: req.body.email
+    })
+    .exec((err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      let email = user.email;
+      let info = { id: user._id, email: email };
+      // The hash we will be sending to the user
+      const token = jwt.sign(info, config.secret, {
+        expiresIn: "1h"
+      });
+      link="https://secure.exxomarkets.com/api/auth/reset-password?token="+token;
+      readHTMLFile(__dirname + '/../public/email_template/FORGOT_PW.html', function(err, html) {
+        if (err) {
+          console.log('error reading file', err);
+          return;
+        }
+        var template = handlebars.compile(html);
+        var replacements = {
+          EMAIL_ADDRESS: email,
+          RESET_LINK: link,
+        };
+        var htmlToSend = template(replacements);
+        var mailOptions = {
+            from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+            to : req.body.email,
+            subject : "Please confirm your account",
+            html : htmlToSend
+        };
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.response);
+            }
+        });
+      });
+      res.status(200).send("User was registered successfully. Please check your email.");
+    });
+  } catch (error) {
+    res.status(500).send("User register failed.");
+    
+  }
+
+};
+
+exports.resetPasswordPage = async (req, res) => {
+  try {
+    let decoded = jwt.verify(req.query.token, config.secret);
+    console.log("decoded", decoded);
+    let user = await User.findById(decoded.id);
+    if (!user)
+        return  res.status(500).send("Couldn't find the user!");
+    else {
+        if (decoded.exp < new Date().getTime() / 1000 ) {
+          return  res.status(500).send("The link was expired");
+        }
+        global.resetEmail = decoded.email;
+        return res.redirect(`${process.env.FRONT_ENTRY}/reset-password`);
+    }
+  } catch (err) {
+    console.log(err)
+    return  res.status(500).send("The link was expired");
+  }
+  
+}
+
 exports.verifyEmail = async (req, res) => {
   let decoded = jwt.verify(req.query.token, config.secret);
   console.log("decoded", decoded);
@@ -105,7 +180,7 @@ exports.verifyEmail = async (req, res) => {
       const partnerId = result.data.partnerId;
 
       const data = {
-          "offerUuid": "85af4b81-f01c-4e0f-9c8d-fd37b0ec4b50",
+          "offerUuid": "2c053e94-4baf-440b-8f63-92a2a75718b4",
           "adminUuid" :  result.data.account_uuid,
           "account": {
             "partnerId": partnerId,
@@ -117,7 +192,7 @@ exports.verifyEmail = async (req, res) => {
             "password": decoded.password,
           }
         } 
-      axios.post(`${process.env.API_SERVER}/documentation/process/api/accounts`, data, { headers } )
+      axios.post(`${process.env.API_SERVER}/documentation/process/api/accounts/sync`, data, { headers } )
       .then(async accountRes => {
         user.accountUuid = accountRes.data.accountUuid;
         await user.save();
@@ -135,6 +210,40 @@ exports.verifyEmail = async (req, res) => {
     return res.redirect(`${process.env.FRONT_ENTRY}/login`);
   })
 }
+exports.resetPassword = (req, res) => {
+ 
+  User.findOne({
+    email: global.resetEmail
+  })
+    .exec((err, user) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        return;
+      }
+      if (!user) {
+        return res.status(404).send({ message: "User Not found." });
+      }
+      global.resetEmail = null;
+      user.password = bcrypt.hashSync(req.body.password, 8);
+      user.save();
+      
+      const data = {
+        email: user.email,
+        partnerId: global.partnerId,
+        newValue: req.body.password
+      }
+      let headers = { ...global.mySpecialVariable, "Content-Type": "application/json" }; 
+      axios.post(`${process.env.API_SERVER}/documentation/auth/api/user/change-password`, data, { headers })
+      .then( async result => {
+          res.status(200).send({ message: "Successfully changed" });
+      }) 
+      .catch(e => { 
+        console.log(e)
+        res.status(500).send({ message: "Axios request for changing Backoffice password was failed!" });
+      })
+
+    });
+};
 exports.signin = (req, res) => {
  
   User.findOne({
