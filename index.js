@@ -66,7 +66,6 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-    console.log("result", req.session);
     res.json({ message: "Welcome to news website backend." });
 });
 

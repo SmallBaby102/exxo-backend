@@ -314,7 +314,7 @@ exports.createTradingAccount = async (req, res, next) => {
       var htmlToSend = template(replacements);
       var mailOptions = {
           from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
-          to : email,
+          to : accountRes.data.clientEmail,
           subject : "Your new account was created successfully!",
           html : htmlToSend
       };
@@ -392,7 +392,6 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
         }  
         let headers = global.mySpecialVariable;
         const accountRes = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/${element.uuid}/trading-accounts/details`, { headers });
-        console.log("got trading accounts of element.email:", accountRes.data);
         for (let index = 0; index < accountRes.data?.length; index++) {
           const trAccount = accountRes.data[index];
           let addressData = ethWallet.generate();

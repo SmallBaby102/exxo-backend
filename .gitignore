@@ -1,4 +1,9 @@
 node_modules
 .env
+<<<<<<< HEAD
 /public/uploads
 /public/result.csv
+=======
+/public/result.csv
+/public/uploads
+>>>>>>> 8f316d557144fe3c081c4c6b915b24517b3479d6
