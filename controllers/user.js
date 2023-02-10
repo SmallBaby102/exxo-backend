@@ -675,7 +675,76 @@ exports.updateStatus = async (req, res, next) => {
     });
 
 }
+exports.internalTransfer = async(req, res, next) => {
+  const  originTradingAccountUuid = req.body.originTradingAccountUuid;
+  const  targetTradingAccountUuid = req.body.targetTradingAccountUuid;
+  const  amount= req.body.amount;
+  const  email = req.body.email;
+  const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
+  const partnerId = global.partnerId;
+  let data = {
+    "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
+    "tradingAccountUuid": originTradingAccountUuid,
+    "amount": amount,
+    "netAmount": amount,
+    "currency": "USD",
+    "remark": "string"
+  }
+  axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/withdraws/manual`, data, { headers })
+  .then(async withdrawResult => {
+    console.log("withdraw success:");  
+    data = {
+      "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
+      "tradingAccountUuid": targetTradingAccountUuid,
+      "amount": amount,
+      "netAmount": amount,
+      "currency": "USD",
+      "remark": "string"
+    } 
+    axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
+    .then(depositRes => {
+      console.log("deposit success");
+      readHTMLFile(__dirname + '/../public/email_template/Withdraw_succeed.html', function(err, html) {
+        if (err) {
+            console.log('error reading file', err);
+            return;
+        }
+        var template = handlebars.compile(html);
+        var replacements = {
+          AMOUNT: amount,
+          TRADING_ACCOUNT_ID: originTradingAccountUuid
+        };
+        var htmlToSend = template(replacements);
+        var mailOptions = {
+            from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+            to : email,
+            subject : "Your internal transfer was succeeded!",
+            html : htmlToSend
+        };
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.response);
+            }
+        });
+      });
+     return res.status(200).send({ message: "success"});
 
+    })
+    .catch(err => {
+      console.log("deposit error", err);
+      return res.status(500).send({ message: err});
+
+    })
+   
+  })
+  .catch(err => {
+    console.log("withdarw error", err);
+    return res.status(500).send({ message: err});
+
+  })
+}
 
 
 exports.webhook = async (req, res, next) => {
