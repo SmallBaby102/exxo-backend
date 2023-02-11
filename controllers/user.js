@@ -7,12 +7,10 @@ var User = require('../models/user.js');
 const Wallet = require('../models/wallet.js');
 const nodemailer = require("nodemailer");
 const handlebars = require('handlebars');
-
 const Web3 = require("web3");
 const Chains = require("@moralisweb3/common-evm-utils");
 const ethers = require("ethers");
 const { readHTMLFile } = require("../utils/helper.js");
-
 const BUSDT_ABI = require("../abi/busdt_abi.json");
 const USDT_ABI = require("../abi/usdt_abi.json");
 const BNB_ABI = require("../abi/bnb_abi.json");
@@ -742,6 +740,20 @@ exports.internalTransfer = async(req, res, next) => {
     console.log("withdarw error", err);
     return res.status(500).send({ message: err});
 
+  })
+}
+exports.getTradingAccountBalance = async(req, res, next) => {
+  const tradingAccountId = req.query.tradingAccountId;
+  const systemUuid = req.query.systemUuid;
+  const partnerId = req.query.partnerId;
+  let headers = global.mySpecialVariable;
+  axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${tradingAccountId}/balance`, { headers })
+  .then( async tradingAccountsRes => {
+    return res.status(200).send(tradingAccountsRes.data)
+  })
+  .catch(err => {
+    console.log(err)
+    return res.status(500).send(err)
   })
 }
 
