@@ -815,7 +815,7 @@ exports.webhook = async (req, res, next) => {
           var htmlToSend = template(replacements);
           var mailOptions = {
               from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
-              to : wallet.$modelemail,
+              to : wallet.email,
               subject : "Your deposit was succeeded",
               html : htmlToSend
           };
@@ -837,14 +837,14 @@ exports.webhook = async (req, res, next) => {
          }
          const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
          const partnerId = global.partnerId;
-        //  axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
-        //  .then(res => {
-        //   console.log("deposit success", res.data);
-        //  })
-        //  .catch(err => {
-        //   console.log("deposit manual failed", err);
+         axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
+         .then(res => {
+          console.log("deposit success", res.data);
+         })
+         .catch(err => {
+          console.log("deposit manual failed", err);
   
-        //  })
+         })
       }
       const contract = new web3.eth.Contract(BNB_ABI, bnb)
       const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
