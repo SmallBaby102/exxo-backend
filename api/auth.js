@@ -1,7 +1,10 @@
 var router = require("express").Router();
 const { verifySignUp } = require("../middlewares");
 const controller = require("../controllers/auth");
+router.get("/admins", controller.getAdmins);
 router.post("/admin-signup", controller.adminSignup);
+router.post("/admin", controller.updateAdmin);
+router.delete("/admin", controller.deleteAdmin);
 router.post("/signup", [verifySignUp.checkDuplicateUsernameOrEmail], controller.signup);
 router.post("/signin", controller.signin);
 router.post("/admin-signin", controller.adminSignin);

@@ -108,7 +108,7 @@ exports.resetLink = (req, res) => {
         var mailOptions = {
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : req.body.email,
-            subject : "Please confirm your account",
+            subject : "Please reset your password",
             html : htmlToSend
         };
         smtpTransport.sendMail(mailOptions, function(error, response){
@@ -329,13 +329,76 @@ exports.signin = (req, res) => {
 
     });
 };
-
+exports.getAdmins = (req, res) => {
+  Admin.find({}, function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      return res.status(200).send(result);
+    }
+  });
+}
+exports.updateAdmin = (req, res) => {
+  if(!req.body){
+    return res.status(500).send({ message: "Request error!" });
+  }
+  const name = req.body.name;
+  const email = req.body.email;
+  const password = bcrypt.hashSync(req.body.password, 8);
+  const role = req.body.role;
+  const createdAt = new Date();
+  Admin.findOne({ email }, async function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      if (result) {
+        result.name = name;
+        result.email = email;
+        result.role = role;
+        // result.password = password;
+        result.createdAt = createdAt;
+        result.save();
+      } else {
+        let admin = new Admin({
+          name,
+          email,
+          role,
+          password,
+          createdAt,
+        })
+        await admin.save();
+      }
+      return res.status(200).send(result);
+    }
+  });
+}
+exports.deleteAdmin = (req, res) => {
+  if(!req.body){
+    return res.status(500).send({ message: "Request error!" });
+  }
+  const name = req.body.name;
+  const email = req.body.email;
+  const role = req.body.role;
+  const createdAt = new Date();
+  Admin.findOneAndRemove({ email }, async function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      console.log("remove", result)
+      return res.status(200).send(result);
+    }
+  });
+}
 exports.adminSignup = (req, res) => {
   try {
     console.log("req.body", req.body)
     let user = new Admin({
       fullname: req.body.fullname,
       email: req.body.email,
+      role: req.body.role,
       password: bcrypt.hashSync(req.body.password, 8)
     });
   

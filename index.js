@@ -17,6 +17,11 @@ const Web3 = require("web3");
 const axios = require('axios');
 const Common = require('ethereumjs-common');
 const Tx = require('ethereumjs-tx');
+const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
+// token address
+const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
+const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
+
 const { readHTMLFile } = require("./utils/helper.js");
 
 require("dotenv").config();
@@ -82,71 +87,50 @@ app.use("/api/auth", auth);
 app.use("/api/user", user);
 app.use("/api/other", other);
 
-function request() {
-    // const wallets = Wallet.get();
-    let wallet_addresses = ["0x7cbEaa70Fa87622cC20A54aC7Cd88Bd008492e47"];
-    const EvmChain = Chains.EvmChain;
-    const options = {
-        chains: [EvmChain.BSC],
-        description: "USDT Transfers",
-        tag: "usdtTransfers",
-        includeContractLogs: true,
-        abi: BUSDT_ABI,
-        topic0: ["Transfer(address,address,uint256)"],
-        webhookUrl: "https://0994-38-32-68-195.ngrok.io/api/user/webhook",
-        advancedOptions : {
-            topic0: "Transfer(address,address,uint256)",
-            // filter: {
-            //     "in" : ["to", wallet_addresses]
-            // }
-        }
-    };
-    Moralis.start({
-        apiKey: process.env.MORALIS_KEY ,
-    }).then(async () => {
+async function request(wallet_addresses) {
+    try {
+
+        // const filter_ERC20 = {  
+        //     "and": [  
+        //         { "eq": ['moralis_streams_contract_address', busdt] },
+        //         { "eq": ["to", wallet_address] },  
+        //         { "gt": ["value", "0000000000000000000"] }, // Example of USDT (18 Decimals) 
+        //     ],
+        // }; 
+        const EvmChain = Chains.EvmChain;
+        const options = {
+            chains: [EvmChain.BSC],
+            description: "USDT Transfers",
+            tag: "usdtTransfers",
+            includeContractLogs: true,
+            abi: BUSDT_ABI,
+            topic0: ["Transfer(address,address,uint256)"],
+            webhookUrl: `${process.env.API_SERVER}/api/user/webhook`,
+            // advancedOptions : {
+            //     topic0: "Transfer(address,address,uint256)",
+            //     filter: filter_ERC20,
+            //     includeNativeTxs: false
+            // } 
+        };
         const stream = await Moralis.Streams.add(options);
         const { id } = stream.toJSON();
         await Moralis.Streams.addAddress({
             id: id,
-            address: ["0x55d398326f99059fF775485246999027B3197955"]   //BUSD-T
+            address: wallet_addresses   // Users' addresses
         })
-    });
+    } catch (error) {
+        console.log(error)            
+    }
 }
 async function getBUsdtTransfer(email, wallet_address){
-    try {
- // const web3 = (new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/")))
- const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
- // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
- const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
- const provider = new ethers.providers.WebSocketProvider(
-     `wss://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/`
- ); 
- // List all token transfers  *to*  myAddress:
- // const filter = {
- //     address: busdt,
- //     topics: [
- //         ethers.utils.id("Transfer(address,address,uint256)"),
- //         null,
- //         [
- //             ethers.utils.hexZeroPad(wallet_addresses[0], 32),
- //             // ethers.utils.id(wallet_addresses[0], 32),
- //         ]
- //     ]
- // };
- // provider.on(filter, async (log) => {
- //     console.log("TX log:", log);
- //     web3.eth.getTransaction(log.transactionHash, async function (error, transactionDetail) {
- //         console.log("trans-detail", transactionDetail);
- //         // if(parseFloat(transactionDetail.value) < 0.000105 ){
- //         //     return;
- //         // }
-        
- //     });
- //     // Emitted whenever a DAI token transfer occurs
- // })
- const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
- const myfilter = contract.filters.Transfer(null, wallet_address)
- contract.on(myfilter, async (from, to, value, event)=>{
+try {
+  
+    const provider = new ethers.providers.WebSocketProvider(
+        `wss://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/`
+    ); 
+    const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
+    const myfilter = contract.filters.Transfer(null, wallet_address)
+    contract.on(myfilter, async (from, to, value, event)=>{
      let transferEvent ={
          from: from,
          to: to,
@@ -160,11 +144,10 @@ async function getBUsdtTransfer(email, wallet_address){
      if (deposit_amount <= 0) {
          return;
      }
-     Wallet.findOne({ ethAddress : wallet_address })
-     .exec(async (err, wallet) => {
+      Wallet.findOne({ ethAddress : wallet_address })
+      .exec(async (err, wallet) => {
        if(err || !wallet) {
          console.log("Cound't find a wallet of this address!");
-         console.log("error:", err, "wallet:", wallet);
          return;
        }
        
@@ -180,7 +163,7 @@ async function getBUsdtTransfer(email, wallet_address){
             var htmlToSend = template(replacements);
             var mailOptions = {
                 from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
-                to : req.body.email,
+                to : email,
                 subject : "Your deposit was succeeded",
                 html : htmlToSend
             };
@@ -212,7 +195,6 @@ async function getBUsdtTransfer(email, wallet_address){
 
         })
 
-        const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
         const contract = new web3.eth.Contract(BNB_ABI, bnb)
         const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
@@ -291,13 +273,13 @@ async function getBUsdtTransfer(email, wallet_address){
         catch(err) {
         console.log(err);
         }
-        });
+      });
      })   
     }
     catch (err) {
         console.log(err)
     }
-  }
+}
 function getAdminToken () {
     const auth = {
         "grant_type": "password",
@@ -338,42 +320,35 @@ function getAdminToken () {
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT} .`);
-    // readHTMLFile(__dirname + '/public/Verify_email.html', function(err, html) {
-    //     if (err) {
-    //       console.log('error reading file', err);
-    //       return;
-    //     }
-    //     let  link="https://secure.exxomarkets.com/api/auth/verify?token="+"token";
+    getAdminToken();
+    Moralis.start({
+        apiKey: process.env.MORALIS_KEY ,
+    });
+    const streams = await Moralis.Streams.getAll({
+        limit: 100, // limit the number of streams to return
+    });
 
-    //     var template = handlebars.compile(html);
-    //     var replacements = {
-    //       VERIFY_LINK: link,
-    //     };
-    //     var htmlToSend = template(replacements);
-    //     var mailOptions = {
-    //         to : "smallbaby102@outlook.com",
-    //         subject : "Please confirm your account",
-    //         html : htmlToSend
-    //     };
-    //     smtpTransport.sendMail(mailOptions, function(error, response){
-    //         if(error){
-    //             console.log(error);
-    //         }else{
-    //             console.log("Message sent: " + response.response);
-    //         }
-    //     });
-    //   });
-    getAdminToken()
+    const options = {
+        method: 'DELETE',
+        headers: {
+          accept: 'application/json',
+          'X-API-Key': process.env.MORALIS_KEY
+        },
+      };
+      
+    for (let index = 0; index < streams.result.length; index++) {
+        const element = streams.result[index]._data;
+        await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
+    } 
+  
     let wallets = await Wallet.find({});
+    let wallet_addresses = [];
     for (let index = 0; index < wallets.length; index++) {
         const element = wallets[index];
-         if (!element.ethAddress || !element.email) {
+         if (!element.ethAddress ) {
             continue;
         }
-        try {
-            setTimeout(() =>{ getBUsdtTransfer(element.email, element.ethAddress)}, 2000 * Math.floor(index / 20));
-        } catch (error) {
-            console.log(error)            
-        }
+        wallet_addresses.push(element.ethAddress);
     }
+    request(wallet_addresses);
 }); 
