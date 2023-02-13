@@ -5,7 +5,7 @@ const Admin = mongoose.model(
   new mongoose.Schema({
     email: String,
     password: String,
-    fullname: String,
+    name: String,
     role: {type: String, default: "Admin"}, //Admin, Super Admin
     createdAt: {type: Date, default: Date.now},
   })

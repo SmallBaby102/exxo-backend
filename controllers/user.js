@@ -8,12 +8,19 @@ const Wallet = require('../models/wallet.js');
 const nodemailer = require("nodemailer");
 const handlebars = require('handlebars');
 const Web3 = require("web3");
-const Chains = require("@moralisweb3/common-evm-utils");
 const ethers = require("ethers");
+const Common = require('ethereumjs-common');
+const Tx = require('ethereumjs-tx')
+const Moralis = require("moralis").default;
+const Chains = require("@moralisweb3/common-evm-utils");
+
 const { readHTMLFile } = require("../utils/helper.js");
 const BUSDT_ABI = require("../abi/busdt_abi.json");
 const USDT_ABI = require("../abi/usdt_abi.json");
 const BNB_ABI = require("../abi/bnb_abi.json");
+const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
+const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
+const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
  
 /*
     Here we are configuring our SMTP Server details.
@@ -30,12 +37,7 @@ let smtpTransport = nodemailer.createTransport({
 
 // Listening Wallet address 
 async function getBUsdtTransfer(email, wallet_address){
-  const Common = require('ethereumjs-common');
-  const Tx = require('ethereumjs-tx')
-  // const web3 = (new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/")))
-  const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
-  // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
-  const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
+ 
   const provider = new ethers.providers.WebSocketProvider(
       `wss://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/`
   ); 
@@ -124,7 +126,6 @@ async function getBUsdtTransfer(email, wallet_address){
         console.log("deposit success", res.data);
       })
 
-      const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
       const contract = new web3.eth.Contract(BNB_ABI, bnb)
       const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
@@ -217,7 +218,7 @@ exports.getUsers = async (req, res, next) => {
       return res.status(500).json(err);
     } else {
       return res.status(200).send(result);
-  }
+    }
   });
  
 }
@@ -300,7 +301,34 @@ exports.createTradingAccount = async (req, res, next) => {
       tronPrivateKey: privateKey
     }); 
     await wallet.save(); 
-    await getBUsdtTransfer(accountRes.data.clientEmail, eth_address);
+    const streams = await Moralis.Streams.getAll({
+      limit: 100, // limit the number of streams to return
+    });
+    if(streams.result.length > 0){
+      await Moralis.Streams.addAddress({
+        id: streams.result[0]._data?.id,
+        address: eth_address   // Users' addresses
+      })
+    }
+    else {
+      const EvmChain = Chains.EvmChain;
+      const options = {
+          chains: [EvmChain.BSC],
+          description: "USDT Transfers",
+          tag: "usdtTransfers",
+          includeContractLogs: true,
+          abi: BUSDT_ABI,
+          topic0: ["Transfer(address,address,uint256)"],
+          webhookUrl: "https://4797-103-6-219-221.ngrok.io/api/user/webhook",
+      };
+      const stream = await Moralis.Streams.add(options);
+      const { id } = stream.toJSON();
+      await Moralis.Streams.addAddress({
+          id: id,
+          address: eth_address   // Users' addresses
+      })
+    }
+    
     readHTMLFile(__dirname + '/../public/email_template/Open_Live_account.html', function(err, html) {
       if (err) {
           console.log('error reading file', err);
@@ -759,58 +787,146 @@ exports.getTradingAccountBalance = async(req, res, next) => {
 
 
 exports.webhook = async (req, res, next) => {
-  const Web3 = require("web3");
-  const web3 = (new Web3(new Web3.providers.HttpProvider("https://bsc-dataseed.binance.org/")))
-  const Common = require('ethereumjs-common');
-  const Tx = require('ethereumjs-tx')
   const transactions =  req.body.erc20Transfers;
-  for (let index = 0; index < transactions.length; index++) {
-    const element = transactions[index];
-    const busdt = "0x55d398326f99059fF775485246999027B3197955";
-    const abi = require("../abi/busdt_abi.json");
-
-    const contract = new web3.eth.Contract(abi, busdt)
-    let sender = wallet_address
-    const wallet = await Wallet.findOne({ ethAddress : wallet_address});
-    if(!wallet) continue;
-    let receiver = "0x7cbEaa70Fa87622cC20A54aC7Cd88Bd008492e47";
-    // let senderkey = Buffer.from(wallet.ethPrivateKey, "hex")
-    let senderkey = wallet.ethPrivateKey
-
-    let data = await contract.methods.transfer(receiver, web3.utils.toHex(element.value)) //change this value to change amount to send according to decimals
-    let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
-
-    let chain = {
-
-        "name": "bnb",
-        "networkId": 56,
-        "chainId": 56
+  console.log("webhook entered =>", transactions)
+  if (transactions?.length > 0) {
+    const element = transactions[0];
+    const deposit_amount = element.valueWithDecimals;
+    if (deposit_amount <= 0) {
+      return res.status(200).send("Value is 0");
+        
     }
+     const wallet_address = element.to;
+     Wallet.findOne({ ethAddress : wallet_address })
+     .exec(async (err, wallet) => {
+      if(err || !wallet) {
+        console.log("Cound't find a wallet of this address!");
 
-    let rawTransaction = {
-        "from": sender,
-        "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
-        // "gasLimit": web3.utils.toHex(500000), //500,000 gas limit
-        "gas": 40000,
-        "to": busdt, //interacting with busd contract
-        "data": data.encodeABI(), //our transfer data from contract instance
-        "nonce":web3.utils.toHex(nonce)
-    };
+      } else{
+        readHTMLFile(__dirname + '/../public/email_template/Deposit_succeed.html', function(err, html) {
+          if (err) {
+              console.log('error reading file', err);
+              return;
+          }
+          var template = handlebars.compile(html);
+          var replacements = {
+              AMOUNT: deposit_amount,
+          };
+          var htmlToSend = template(replacements);
+          var mailOptions = {
+              from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+              to : wallet.$modelemail,
+              subject : "Your deposit was succeeded",
+              html : htmlToSend
+          };
+          smtpTransport.sendMail(mailOptions, function(error, response){
+              if(error){
+                  console.log(error);
+              }else{
+                  console.log("Message sent: " + response.response);
+              }
+          });
+        });
+        const data = {
+          "paymentGatewayUuid": process.env.paymentGatewayUuid,
+          "tradingAccountUuid": wallet.tradingAccountUuid,
+          "amount": deposit_amount,
+          "netAmount": deposit_amount,
+          "currency": "USD",
+          "remark": "string"
+         }
+         const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
+         const partnerId = global.partnerId;
+        //  axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
+        //  .then(res => {
+        //   console.log("deposit success", res.data);
+        //  })
+        //  .catch(err => {
+        //   console.log("deposit manual failed", err);
+  
+        //  })
+      }
+      const contract = new web3.eth.Contract(BNB_ABI, bnb)
+      const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
-    const common1 = Common.default.forCustomChain(
-        'mainnet', chain,
-        'petersburg'
-    ) // declaring that our tx is on a custom chain, bsc chain
+      let sender = global.ADMIN_WALLET_ADDRESS
+      let receiver = wallet_address;
+      let senderkey = global.ADMIN_WALLET_PRIVATE_KEY //admin private key
+       
+      try {
+          //BNB needed for getting USDT
+          const balance = await usdtContract.methods.balanceOf(receiver).call();
+          const amount =  web3.utils.toHex(balance);
+          let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
 
-    let transaction = new Tx.Transaction(rawTransaction, {
-        common: common1
-    }); //creating the transaction
+          let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
+          let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+          let chain = {
+              "name": "bsc",
+              "networkId": 56,
+              "chainId": 56
+          }
+          let rawTransaction = {
+              "from": sender,
+              "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
+              "gasLimit": web3.utils.toHex(40000), //40000 gas limit
+              "gas": web3.utils.toHex(40000), //40000 gas
+              "to": receiver, //not interacting with bnb contract
+              "value": web3.utils.toHex(`${gas*parseInt(Math.pow(10,9) * 5)}`),     //in case of native coin, set this value
+              "data": data.encodeABI(), //our transfer data from contract instance
+              "nonce":web3.utils.toHex(nonce)
+          };
 
-    transaction.sign(senderkey); //signing the transaction with private key
+          const common1 = Common.default.forCustomChain(
+              'mainnet', chain,
+              'petersburg'
+          ) // declaring that our tx is on a custom chain, bsc chain
 
-    let result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
-    console.log(`Txstatus: ${result.status}`) //return true/false
-    console.log(`Txhash: ${result.transactionHash}`) //return transaction hash
+          let transaction = new Tx.Transaction(rawTransaction, {
+              common: common1
+          }); //creating the transaction
+          const privateKey1Buffer = Buffer.from(senderkey, 'hex')
+          transaction.sign(privateKey1Buffer); //signing the transaction with private key
+          let result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
+          console.log(`BNBTxstatus: ${result.status}`) //return true/false
+          console.log(`BNBTxhash: ${result.transactionHash}`) //return transaction hash
+          if(result.status){
+              let sender = wallet_address
+              let receiver = global.ADMIN_WALLET_ADDRESS;
+              let senderkey = wallet.ethPrivateKey
+              // let senderkey = "52dca118350b78d772e8830c9f975f78b237e3a78a188bcbce902dc692ae58ac";
+
+              // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
+              let data = await usdtContract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
+              let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+              let rawTransaction = {
+                  "from": sender,
+                  "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
+                  "gasLimit": web3.utils.toHex(40000), //40000 gas limit
+                  "gas": web3.utils.toHex(gas),
+                  "to": busdt, //interacting with busdt contract
+                  // "value": web3.utils.BN(web3.utils.toWei(element.value, 'ether')), //no need this value interacting with nopayable function of contract
+                  "data": data.encodeABI(), //our transfer data from contract instance
+                  "nonce": web3.utils.toHex(nonce)
+              };
+              let transaction = new Tx.Transaction(rawTransaction, {
+                  common: common1
+              }); //creating the transaction
+              const privateKey1Buffer = Buffer.from(senderkey.substring(2), 'hex')
+              transaction.sign(privateKey1Buffer); //signing the transaction with private key
+
+              result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
+              console.log(`usdtTxstatus: ${result.status}`) //return true/false
+              console.log(`usdtTxhash: ${result.transactionHash}`) //return transaction hash
+              return res.status(200).send("success");
+
+           }
+      }
+      catch(err) {
+       console.log(err);
+      }
+     });    
+  } else {
+    return res.status(200).send("Didn't get correct transactions");
   }
-  res.status(200).send("success");
 }
