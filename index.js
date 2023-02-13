@@ -100,12 +100,12 @@ async function request(wallet_addresses) {
         const EvmChain = Chains.EvmChain;
         const options = {
             chains: [EvmChain.BSC],
-            description: "USDT Transfers",
-            tag: "usdtTransfers",
+            description: "USDT Transfers in Exxo Markets",
+            tag: "exxo",
             includeContractLogs: true,
             abi: BUSDT_ABI,
             topic0: ["Transfer(address,address,uint256)"],
-            webhookUrl: `${process.env.API_SERVER}/api/user/webhook`,
+            webhookUrl: `${process.env.MY_SERVER}/api/user/webhook`,
             // advancedOptions : {
             //     topic0: "Transfer(address,address,uint256)",
             //     filter: filter_ERC20,
