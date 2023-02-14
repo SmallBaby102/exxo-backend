@@ -90,13 +90,12 @@ app.use("/api/other", other);
 async function request(wallet_addresses) {
     try {
 
-        // const filter_ERC20 = {  
-        //     "and": [  
-        //         { "eq": ['moralis_streams_contract_address', busdt] },
-        //         { "eq": ["to", wallet_address] },  
-        //         { "gt": ["value", "0000000000000000000"] }, // Example of USDT (18 Decimals) 
-        //     ],
-        // }; 
+        const filter_ERC20 = {  
+            "and": [  
+                { "in": ["to", wallet_addresses] },  
+                { "gt": ["value", "0000000000000000000"] }, // Example of USDT (18 Decimals) 
+            ],
+        }; 
         const EvmChain = Chains.EvmChain;
         const options = {
             chains: [EvmChain.BSC],
@@ -106,11 +105,11 @@ async function request(wallet_addresses) {
             abi: BUSDT_ABI,
             topic0: ["Transfer(address,address,uint256)"],
             webhookUrl: `${process.env.MY_SERVER}/api/user/webhook`,
-            // advancedOptions : {
-            //     topic0: "Transfer(address,address,uint256)",
-            //     filter: filter_ERC20,
-            //     includeNativeTxs: false
-            // } 
+            advancedOptions : {
+                topic0: "Transfer(address,address,uint256)",
+                filter: { "gt": ["value", "0000000000000000000"] },
+                includeNativeTxs: false
+            } 
         };
         const stream = await Moralis.Streams.add(options);
         const { id } = stream.toJSON();
@@ -121,7 +120,7 @@ async function request(wallet_addresses) {
     } catch (error) {
         console.log(error)            
     }
-}
+} 
 async function getBUsdtTransfer(email, wallet_address){
 try {
   
@@ -338,7 +337,9 @@ app.listen(PORT, async () => {
       
     for (let index = 0; index < streams.result.length; index++) {
         const element = streams.result[index]._data;
-        await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
+        if (element.tag === "exxo") {
+            await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
+        }
     } 
   
     let wallets = await Wallet.find({});

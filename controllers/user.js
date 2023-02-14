@@ -104,9 +104,9 @@ async function getBUsdtTransfer(email, wallet_address){
           };
           smtpTransport.sendMail(mailOptions, function(error, response){
               if(error){
-                  console.log(error);
+                  // console.log(error);
               }else{
-                  console.log("Message sent: " + response.response);
+                  // console.log("Message sent: " + response.response);
               }
           });
         });
@@ -304,28 +304,43 @@ exports.createTradingAccount = async (req, res, next) => {
     const streams = await Moralis.Streams.getAll({
       limit: 100, // limit the number of streams to return
     });
-    if(streams.result.length > 0){
+
+    const oldStream = streams.result?.find(item => item._data?.tag === "exxo");
+    const filter_ERC20 = {  
+      "and": [  
+          // { "eq": ['moralis_streams_contract_address', busdt] },
+          { "eq": ["to", eth_address] },  
+          { "gt": ["value", "0000000000000000000"] }, // Example of USDT (18 Decimals) 
+      ],
+    }; 
+    const EvmChain = Chains.EvmChain;
+    const options = {
+        chains: [EvmChain.BSC],
+        description: "USDT Transfers in Exxo Markets",
+        tag: "exxo",
+        includeContractLogs: true,
+        abi: BUSDT_ABI,
+        topic0: ["Transfer(address,address,uint256)"],
+        webhookUrl: `${process.env.MY_SERVER}/api/user/webhook`,
+        advancedOptions : {
+          topic0: "Transfer(address,address,uint256)",
+          filter: { "gt": ["value", "0000000000000000000"] },
+          includeNativeTxs: false
+      } 
+    };
+    if(oldStream){
       await Moralis.Streams.addAddress({
-        id: streams.result[0]._data?.id,
-        address: eth_address   // Users' addresses
+        id: oldStream._data?.id,
+        address: [eth_address]   // Users' addresses
       })
     }
     else {
-      const EvmChain = Chains.EvmChain;
-      const options = {
-          chains: [EvmChain.BSC],
-          description: "USDT Transfers",
-          tag: "usdtTransfers",
-          includeContractLogs: true,
-          abi: BUSDT_ABI,
-          topic0: ["Transfer(address,address,uint256)"],
-          webhookUrl: "https://4797-103-6-219-221.ngrok.io/api/user/webhook",
-      };
+      
       const stream = await Moralis.Streams.add(options);
       const { id } = stream.toJSON();
       await Moralis.Streams.addAddress({
           id: id,
-          address: eth_address   // Users' addresses
+          address: [eth_address]   // Users' addresses
       })
     }
     
@@ -346,16 +361,16 @@ exports.createTradingAccount = async (req, res, next) => {
       };
       smtpTransport.sendMail(mailOptions, function(error, response){
           if(error){
-              console.log(error);
+              // console.log(error);
           }else{
-              console.log("Message sent: " + response.response);
+              // console.log("Message sent: " + response.response);
           }
       });
     });
     res.status(200).send({ account: accountRes.data, message: "Your new account was created successfully!" });
   }) 
   .catch(err => {
-    console.log(err.response.data.message);
+    console.log(err);
     res.status(500).send({ message: "Creating Trading account failed" });
   })
 } 
@@ -591,9 +606,9 @@ exports.verifyProfile = async (req, res, next) => {
         };
         smtpTransport.sendMail(mailOptions, function(error, response){
             if(error){
-                console.log(error);
+                // console.log(error);
             }else{
-                console.log("Message sent: " + response.response);
+                // console.log("Message sent: " + response.response);
             }
         });
       });
@@ -788,6 +803,9 @@ exports.getTradingAccountBalance = async(req, res, next) => {
 
 exports.webhook = async (req, res, next) => {
   const transactions =  req.body.erc20Transfers;
+  if (!req.body.confirmed) {
+    return res.status(200).send("Not confirmed");
+  }
   console.log("webhook entered =>", transactions)
   if (transactions?.length > 0) {
     const element = transactions[0];
@@ -801,7 +819,7 @@ exports.webhook = async (req, res, next) => {
      .exec(async (err, wallet) => {
       if(err || !wallet) {
         console.log("Cound't find a wallet of this address!");
-
+        return res.status(200).send("Cound't find a wallet of this address!");
       } else{
         readHTMLFile(__dirname + '/../public/email_template/Deposit_succeed.html', function(err, html) {
           if (err) {
@@ -821,9 +839,9 @@ exports.webhook = async (req, res, next) => {
           };
           smtpTransport.sendMail(mailOptions, function(error, response){
               if(error){
-                  console.log(error);
+                  // console.log(error);
               }else{
-                  console.log("Message sent: " + response.response);
+                  // console.log("Message sent: " + response.response);
               }
           });
         });
@@ -839,10 +857,10 @@ exports.webhook = async (req, res, next) => {
          const partnerId = global.partnerId;
          axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
          .then(res => {
-          console.log("deposit success", res.data);
+          console.log("deposit success");
          })
          .catch(err => {
-          console.log("deposit manual failed", err);
+          console.log("deposit manual failed");
   
          })
       }
@@ -924,7 +942,8 @@ exports.webhook = async (req, res, next) => {
       }
       catch(err) {
        console.log(err);
-      }
+      return res.status(200).send("error");
+    }
      });    
   } else {
     return res.status(200).send("Didn't get correct transactions");
