@@ -306,7 +306,10 @@ exports.signin = (req, res) => {
           .then( async accountRes => {
             res.status(200).send({
               ...user._doc,
-              ...accountRes.data,
+              partnerId: accountRes.data?.partnerId, 
+              accountUuid: accountRes.data?.accountUuid, 
+              uuid: accountRes.data?.uuid, 
+              // ...accountRes.data,
               accessToken: token,
             });
               

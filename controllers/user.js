@@ -482,7 +482,7 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
 
 exports.getTradingAccounts = async (req, res, next) => {
     let headers = global.mySpecialVariable;
-    const partnerId = req.query.partnerId;
+    const partnerId = global.partnerId;
     const clientUuid = req.query.clientUuid;
     axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/${clientUuid}/trading-accounts/details`, { headers })
     .then( async tradingAccountsRes => {
@@ -550,7 +550,7 @@ exports.changePassword = async (req, res, next) => {
 exports.getOffers = async (req, res, next) => {
     let headers = global.mySpecialVariable;
     const email = req.query.email;
-    const partnerId = req.query.partnerId;
+    const partnerId = global.partnerId;
     axios.get(`${process.env.API_SERVER}/proxy/configuration/api/partner/${partnerId}/offers`, { headers })
     .then( offersRes => {
       console.log("Global:", email, partnerId)
@@ -564,23 +564,9 @@ exports.getOffers = async (req, res, next) => {
 }
 exports.verifyProfile = async (req, res, next) => {
   const email = req.body.email;
-  User.findOneAndUpdate({
+  User.findOne({
     email: email
-  },
-  {
-    fullname: req.body.name,
-    birthday: req.body.dob,
-    expDate: req.body.expDate,
-    country: req.body.country,
-    city: req.body.city,
-    postalCode: req.body.postalCode,
-    address: req.body.address,
-    docType: req.body.docType,
-    docUrl1: req.files?.frontImg? req.files?.frontImg[0]?.path : "",
-    docUrl2: req.files?.backImg ? req.files?.backImg[0]?.path : "",
-    verification_status: "Pending",
-  },
-   function (err, place) {
+  }).exec(async function (err, place) {
       if (err) {
         res.status(500).send({ message: err });
         return;
@@ -612,7 +598,19 @@ exports.verifyProfile = async (req, res, next) => {
             }
         });
       });
-      res.status(200).send("Saved a profile!"+ place);
+      place.fullname= req.body.name;
+      place.birthday= req.body.dob;
+      place.expDate= req.body.expDate;
+      place.country= req.body.country;
+      place.city= req.body.city;
+      place.postalCode= req.body.postalCode;
+      place.address= req.body.address;
+      place.docType= req.body.docType;
+      place.docUrl1= req.files?.frontImg? req.files?.frontImg[0]?.path : "";
+      place.docUrl2= req.files?.backImg ? req.files?.backImg[0]?.path : "";
+      place.verification_status= "Pending";
+      await place.save();
+      return res.status(200).send(place);
     });
 
 }
@@ -649,7 +647,6 @@ exports.updateStatus = async (req, res, next) => {
               "address" : place.address,
               "status" : status
           } 
-        console.log("Update user:", email, partnerId, data);
         readHTMLFile(__dirname + '/../public/email_template/KYC_APPROVED.html', function(err, html) {
           if (err) {
               console.log('error reading file', err);
@@ -788,7 +785,7 @@ exports.internalTransfer = async(req, res, next) => {
 exports.getTradingAccountBalance = async(req, res, next) => {
   const tradingAccountId = req.query.tradingAccountId;
   const systemUuid = req.query.systemUuid;
-  const partnerId = req.query.partnerId;
+  const partnerId = global.partnerId;
   let headers = global.mySpecialVariable;
   axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${tradingAccountId}/balance`, { headers })
   .then( async tradingAccountsRes => {
