@@ -392,29 +392,7 @@ exports.deleteAdmin = (req, res) => {
     }
   });
 }
-exports.adminSignup = (req, res) => {
-  try {
-    console.log("req.body", req.body)
-    let user = new Admin({
-      fullname: req.body.fullname,
-      email: req.body.email,
-      role: req.body.role,
-      password: bcrypt.hashSync(req.body.password, 8)
-    });
-  
-    user.save((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
-      res.status(200).send("Admin was registered successfully.");
-    });
-  } catch (error) {
-    res.status(500).send("Admin register failed.");
-    
-  }
 
-};
 exports.adminSignin = (req, res) => {
  
   Admin.findOne({
