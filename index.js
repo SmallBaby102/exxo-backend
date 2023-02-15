@@ -187,10 +187,10 @@ try {
         const partnerId = global.partnerId;
         axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
         .then(res => {
-        console.log("deposit success", res.data);
+            console.log("deposit success", res.data);
         })
         .catch(err => {
-        console.log("deposit manual failed", err);
+            console.log("deposit manual failed", err);
 
         })
 
@@ -335,21 +335,21 @@ app.listen(PORT, async () => {
         },
       };
       
-    for (let index = 0; index < streams.result.length; index++) {
-        const element = streams.result[index]._data;
-        if (element.tag === "exxo") {
-            await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
-        }
-    } 
+    // for (let index = 0; index < streams.result.length; index++) {
+    //     const element = streams.result[index]._data;
+    //     if (element.tag === "exxo") {
+    //         await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
+    //     }
+    // } 
   
-    let wallets = await Wallet.find({});
-    let wallet_addresses = [];
-    for (let index = 0; index < wallets.length; index++) {
-        const element = wallets[index];
-         if (!element.ethAddress ) {
-            continue;
-        }
-        wallet_addresses.push(element.ethAddress);
-    }
-    request(wallet_addresses);
+    // let wallets = await Wallet.find({});
+    // let wallet_addresses = [];
+    // for (let index = 0; index < wallets.length; index++) {
+    //     const element = wallets[index];
+    //      if (!element.ethAddress ) {
+    //         continue;
+    //     }
+    //     wallet_addresses.push(element.ethAddress);
+    // }
+    // request(wallet_addresses);
 }); 

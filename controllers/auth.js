@@ -307,9 +307,7 @@ exports.signin = (req, res) => {
             res.status(200).send({
               ...user._doc,
               partnerId: accountRes.data?.partnerId, 
-              accountUuid: accountRes.data?.accountUuid, 
-              uuid: accountRes.data?.uuid, 
-              // ...accountRes.data,
+              ...accountRes.data,
               accessToken: token,
             });
               
@@ -320,11 +318,10 @@ exports.signin = (req, res) => {
                 ...user._doc,
                 accessToken: token
               });
-          })
-              
+          })              
       })
       .catch(e => {
-        console.log(e);
+        //console.log(e);
         res.status(500).send({
           message: "Admin signin error"
         });

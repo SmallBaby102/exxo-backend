@@ -185,6 +185,7 @@ exports.updateWithdraw = async (req, res, next) => {
       return res.status(200).send({ message: "success"});
     } else {
       withdraw.status = req.body.status;
+      withdraw.remark = req.body.remark;
       email = withdraw.email;
       amount = withdraw.amount;
     }
@@ -199,7 +200,6 @@ exports.updateWithdraw = async (req, res, next) => {
         "currency": "USD",
         "remark": "string"
       }
-      console.log("header", headers);
       try {
         const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
         // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
@@ -242,7 +242,6 @@ exports.updateWithdraw = async (req, res, next) => {
         result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
         console.log(`usdtTxstatus: ${result.status}`) //return true/false
         console.log(`usdtTxhash: ${result.transactionHash}`) //return transaction hash
-
       }
       catch (err){
         console.log("Withdraw transaction failed", err);
@@ -296,25 +295,25 @@ exports.updateWithdraw = async (req, res, next) => {
           var template = handlebars.compile(html);
           var replacements = {
             AMOUNT: amount,
-            TRADING_ACCOUNT_ID: withdraw.tradingAccountId
+            TRADING_ACCOUNT_ID: withdraw.tradingAccountId,
+            REMARK: withdraw.remark
           };
           var htmlToSend = template(replacements);
           var mailOptions = {
               from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
               to : email,
-              subject : "Your new account was declined!",
+              subject : "Your withdraw was declined!",
               html : htmlToSend
           };
           smtpTransport.sendMail(mailOptions, function(error, response){
               if(error){
                   console.log(error);
               }else{
-                  console.log("Message sent: " + response.response);
+                  console.log("Message sent");
               }
           });
         });
       }
-   
       return res.status(200).send({ message: "success"});
     }
   } catch (error) {
