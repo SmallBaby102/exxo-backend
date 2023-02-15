@@ -9,6 +9,7 @@ const Withdraw = mongoose.model(
     currency: String,
     tradingAccountId: String,
     tradingAccountUuid: String,
+    remark: String,
     submittedAt: {type: Date, default: Date.now},
     status: {type: String, default: "Pending" },  //Pending, Approved, Rejected (Withdraw status)
   })

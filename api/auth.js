@@ -1,6 +1,7 @@
 var router = require("express").Router();
 const { verifySignUp } = require("../middlewares");
 const controller = require("../controllers/auth");
+
 router.get("/admins", controller.getAdmins);
 router.post("/admin",  [verifySignUp.checkDuplicateAdminNameOrEmail],  controller.updateAdmin);
 router.delete("/admin", controller.deleteAdmin);

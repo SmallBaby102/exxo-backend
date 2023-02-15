@@ -239,6 +239,7 @@ exports.updateUsers = async (req, res, next) => {
     birthday: reqbody?.dob, 
     address: reqbody?.address,
     city: reqbody?.city,
+    state: reqbody?.state,
     country: reqbody?.country,
     postalCode: reqbody?.postalCode,
    }, function(err, result) {
@@ -257,19 +258,18 @@ exports.updateUsers = async (req, res, next) => {
             "city" : result.city,
             "postCode" : result.postalCode,
             "address" : result.address,
-        } 
+      } 
 
       axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${result.email}&partnerId=${partnerId}`, data, { headers } )
       .then(accountRes => {
         console.log("updated a CFD account:", accountRes.data);
-        return res.status(200).send("Updated a Backoffice account!"+ result);
+        return res.status(200).send({...result, ...accountRes.data});
       })
       .catch(err => {
         console.log("Update backoffice error:", err.response.data.message);
-        return res.status(200).send("Didn't update a Backoffice account!"+ result);
+        return res.status(200).send(result);
       })
     }
-
   });
 
 }
@@ -622,6 +622,7 @@ exports.updateStatus = async (req, res, next) => {
   },
   {
     verification_status: status,
+    remark: req.body.remark,
    },
    function (err, place) {
       if (err) {
@@ -690,6 +691,7 @@ exports.updateStatus = async (req, res, next) => {
           }
           var template = handlebars.compile(html);
           var replacements = {
+            REMARK: req.body.remark
           };
           var htmlToSend = template(replacements);
           var mailOptions = {
@@ -702,17 +704,18 @@ exports.updateStatus = async (req, res, next) => {
               if(error){
                   console.log(error);
               }else{
-                  console.log("Message sent: " + response.response);
+                  console.log("Message sent");
               }
           });
       });
-        return res.status(200).send("The profile was rejected!"+ place);
+        return res.status(200).send("The profile was rejected!");
       }
 
     });
 
 }
 exports.internalTransfer = async(req, res, next) => {
+  const  originTradingAccountId = req.body.originTradingAccountId;
   const  originTradingAccountUuid = req.body.originTradingAccountUuid;
   const  targetTradingAccountUuid = req.body.targetTradingAccountUuid;
   const  amount= req.body.amount;
@@ -749,7 +752,7 @@ exports.internalTransfer = async(req, res, next) => {
         var template = handlebars.compile(html);
         var replacements = {
           AMOUNT: amount,
-          TRADING_ACCOUNT_ID: originTradingAccountUuid
+          TRADING_ACCOUNT_ID: originTradingAccountId
         };
         var htmlToSend = template(replacements);
         var mailOptions = {
@@ -817,50 +820,7 @@ exports.webhook = async (req, res, next) => {
       if(err || !wallet) {
         console.log("Cound't find a wallet of this address!");
         return res.status(200).send("Cound't find a wallet of this address!");
-      } else{
-        readHTMLFile(__dirname + '/../public/email_template/Deposit_succeed.html', function(err, html) {
-          if (err) {
-              console.log('error reading file', err);
-              return;
-          }
-          var template = handlebars.compile(html);
-          var replacements = {
-              AMOUNT: deposit_amount,
-          };
-          var htmlToSend = template(replacements);
-          var mailOptions = {
-              from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
-              to : wallet.email,
-              subject : "Your deposit was succeeded",
-              html : htmlToSend
-          };
-          smtpTransport.sendMail(mailOptions, function(error, response){
-              if(error){
-                  // console.log(error);
-              }else{
-                  // console.log("Message sent: " + response.response);
-              }
-          });
-        });
-        const data = {
-          "paymentGatewayUuid": process.env.paymentGatewayUuid,
-          "tradingAccountUuid": wallet.tradingAccountUuid,
-          "amount": deposit_amount,
-          "netAmount": deposit_amount,
-          "currency": "USD",
-          "remark": "string"
-         }
-         const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
-         const partnerId = global.partnerId;
-         axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
-         .then(res => {
-          console.log("deposit success");
-         })
-         .catch(err => {
-          console.log("deposit manual failed");
-  
-         })
-      }
+      } 
       const contract = new web3.eth.Contract(BNB_ABI, bnb)
       const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
@@ -933,6 +893,47 @@ exports.webhook = async (req, res, next) => {
               result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
               console.log(`usdtTxstatus: ${result.status}`) //return true/false
               console.log(`usdtTxhash: ${result.transactionHash}`) //return transaction hash
+              readHTMLFile(__dirname + '/../public/email_template/Deposit_succeed.html', function(err, html) {
+                if (err) {
+                    console.log('error reading file', err);
+                    return;
+                }
+                var template = handlebars.compile(html);
+                var replacements = {
+                    AMOUNT: deposit_amount,
+                };
+                var htmlToSend = template(replacements);
+                var mailOptions = {
+                    from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+                    to : wallet.email,
+                    subject : "Your deposit was succeeded",
+                    html : htmlToSend
+                };
+                smtpTransport.sendMail(mailOptions, function(error, response){
+                    if(error){
+                        // console.log(error);
+                    }else{
+                        // console.log("Message sent: " + response.response);
+                    }
+                });
+              });
+              data = {
+                "paymentGatewayUuid": process.env.paymentGatewayUuid,
+                "tradingAccountUuid": wallet.tradingAccountUuid,
+                "amount": deposit_amount,
+                "netAmount": deposit_amount,
+                "currency": "USD",
+                "remark": "string"
+               }
+               const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
+               const partnerId = global.partnerId;
+               axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
+               .then(res => {
+                console.log("deposit success");
+               })
+               .catch(err => {
+                console.log("deposit manual failed");        
+               })
               return res.status(200).send("success");
 
            }
