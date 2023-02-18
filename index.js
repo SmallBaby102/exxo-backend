@@ -62,7 +62,6 @@ app.use(session({
     resave: false 
 }));
 
-
 app.use(cors({ origin: "*", credentials : true }));
 app.use(express.json({ extended: false }));
 app.use(express.urlencoded({extended: true}));
@@ -176,7 +175,7 @@ try {
         });
         
         const data = {
-        "paymentGatewayUuid": process.env.paymentGatewayUuid,
+        "paymentGatewayUuid": process.env.PAYMENT_GATEWAY_UUID,
         "tradingAccountUuid": wallet.tradingAccountUuid,
         "amount": deposit_amount,
         "netAmount": deposit_amount,
@@ -281,14 +280,14 @@ try {
 }
 function getAdminToken () {
     const auth = {
-        "grant_type": "password",
-        "password": "abcd1234",
-        "username": "cfdprime-broker@integration.com",
+        "grant_type": process.env.AUTH_GRANTTYPE,
+        "password": process.env.AUTH_PASSWORD,
+        "username": process.env.AUTH_USERNAME, 
         }
     let headers = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
-        "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
+        "Authorization": process.env.AUTH_AUTHORIZATION, //"Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
+        "Cookie": process.env.AUTH_COOKIE //"JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
     }
     axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
     .then(async result => {
@@ -309,11 +308,11 @@ function getAdminToken () {
         } else {
             global.ADMIN_WALLET_ADDRESS = process.env.ADMIN_WALLET_ADDRESS;
             global.ADMIN_WALLET_PRIVATE_KEY = process.env.ADMIN_WALLET_PRIVATE_KEY;
-        }
-        
+        }        
     })
     .catch(err => {
-        console.log(err);
+        //console.log(err);
+        console.log("******", err);
     })
 }
 const PORT = process.env.PORT || 8080;
@@ -335,21 +334,23 @@ app.listen(PORT, async () => {
         },
       };
       
-    // for (let index = 0; index < streams.result.length; index++) {
-    //     const element = streams.result[index]._data;
-    //     if (element.tag === "exxo") {
-    //         await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
-    //     }
-    // } 
+    for (let index = 0; index < streams.result.length; index++) {
+        const element = streams.result[index]._data;
+        if (element.tag === "exxo") {
+            await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
+        }
+    } 
   
-    // let wallets = await Wallet.find({});
-    // let wallet_addresses = [];
-    // for (let index = 0; index < wallets.length; index++) {
-    //     const element = wallets[index];
-    //      if (!element.ethAddress ) {
-    //         continue;
-    //     }
-    //     wallet_addresses.push(element.ethAddress);
-    // }
-    // request(wallet_addresses);
+    let wallets = await Wallet.find({});
+    let wallet_addresses = [];
+    for (let index = 0; index < wallets.length; index++) {
+        const element = wallets[index];
+         if (!element.ethAddress ) {
+            continue;
+        }
+        wallet_addresses.push(element.ethAddress);
+    }
+    if ( wallet_addresses.length > 0 ) {
+        request(wallet_addresses);
+    }
 }); 

@@ -13,6 +13,8 @@ const { readHTMLFile } = require("../utils/helper.js");
 const Web3 = require("web3");
 const Common = require('ethereumjs-common');
 const Tx = require('ethereumjs-tx');
+const sessions = require('express-session');
+var moment = require('moment')
 const BUSDT_ABI = require("../abi/busdt_abi.json");
 
 
@@ -172,17 +174,44 @@ exports.updateWithdraw = async (req, res, next) => {
     const id = req.body.id;
     let amount = req.body.amount;
     let email = req.body.email;
+    let address = req.body.address;
+
+    // confirm withdraw verification code first
+    let cur_moment = moment();
+    let timeDifference = cur_moment.diff(sessions.moment, 'seconds')
+    let request_code = req.body.code;
+    let session_code = sessions.withdraw_verify_code;
+
+    
     let withdraw = await Withdraw.findOne({ _id: id });
     if (!withdraw) {
+      // confirm withdraw verification code ith email
+      if ( request_code != session_code ) {
+        return res.status(200).send({ 
+          status : 0,
+          message : "Verification code is wrong. Try again."
+        });
+      }
+      if ( timeDifference > 30 * 60 ) { // expired after 30min      
+        return res.status(200).send({ 
+          status : 0,
+          message : "Expired verification code. Try to send again"
+        });
+      } 
+
       withdraw = new Withdraw({
         email: email,
         amount: amount,
+        address: address,
         currency: "USD",
         tradingAccountId: req.body.tradingAccountId,
         tradingAccountUuid: req.body.tradingAccountUuid,
       });
       await withdraw.save();
-      return res.status(200).send({ message: "success"});
+      return res.status(200).send({ 
+        status: 1,
+        message: "success"
+      });
     } else {
       withdraw.status = req.body.status;
       withdraw.remark = req.body.remark;
@@ -193,7 +222,7 @@ exports.updateWithdraw = async (req, res, next) => {
       const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
       const partnerId = global.partnerId;
       const data = {
-        "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
+        "paymentGatewayUuid": process.env.PAYMENT_GATEWAY_UUID, //"58d26ead-8ba4-4588-8caa-358937285f88",
         "tradingAccountUuid": withdraw.tradingAccountUuid,
         "amount": withdraw.amount,
         "netAmount": withdraw.amount,
@@ -276,13 +305,19 @@ exports.updateWithdraw = async (req, res, next) => {
               }
           });
         });
-        return res.status(200).send({ message: "success"});
+        return res.status(200).send({ 
+          status: 1,
+          message: "success"
+        });
       })
       .catch(async err => {
         withdraw.status = "Failed";
         console.log("withdraw failed:", err);   
         await withdraw.save();
-        return res.status(500).send({ message: "error"});
+        return res.status(500).send({ 
+          status: 0,
+          message: "error"
+        });
       })
     } else {
       await withdraw.save();
@@ -314,10 +349,16 @@ exports.updateWithdraw = async (req, res, next) => {
           });
         });
       }
-      return res.status(200).send({ message: "success"});
+      return res.status(200).send({ 
+        status: 1,
+        message: "success"
+      });
     }
   } catch (error) {
     console.log(error)
-    return res.status(500).send({ message: "error"});
+    return res.status(500).send({ 
+      status: 0,
+      message: "error"
+    });
   }
 } 

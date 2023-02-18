@@ -12,4 +12,6 @@ router.get("/verify", controller.verifyEmail);
 router.post("/reset-link", controller.resetLink);
 router.get("/reset-password", controller.resetPasswordPage);
 router.post("/reset-password", controller.resetPassword);
+router.get("/send-verify-code", controller.sendWithdrawVerifyCode);
+router.get("/verify-withdraw-code", controller.verifyWithdrawCode);
 module.exports = router;
