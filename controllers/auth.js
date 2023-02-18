@@ -2,6 +2,8 @@ const config = require("../config/auth");
 const User = require("../models/user");
 const Admin = require("../models/admin");
 const axios = require("axios"); 
+const sessions = require('express-session');
+var moment = require('moment')
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
@@ -153,9 +155,9 @@ exports.verifyEmail = async (req, res) => {
   let decoded = jwt.verify(req.query.token, config.secret);
   console.log("decoded", decoded);
   const auth = {
-    username: "cfdprime-broker@integration.com",
-    password: "abcd1234",
-    grant_type: "password"
+    username: process.env.AUTH_USERNAME,
+    password: process.env.AUTH_PASSWORD,
+    grant_type: process.env.AUTH_GRANTTYPE
   } 
   let user = await User.findById(decoded.id);
   if (!user)
@@ -167,8 +169,8 @@ exports.verifyEmail = async (req, res) => {
   }
   let headers = {
       "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
-      "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
+      "Authorization": process.env.AUTH_AUTHORIZATION,
+      "Cookie": process.env.AUTH_COOKIE
   } 
   axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
   .then(result => {
@@ -184,7 +186,7 @@ exports.verifyEmail = async (req, res) => {
       const partnerId = result.data.partnerId;
 
       const data = {
-          "offerUuid": "2c053e94-4baf-440b-8f63-92a2a75718b4",
+          "branchUuid": process.env.BRANCH_UUID,
           "adminUuid" :  result.data.account_uuid,
           "account": {
             "partnerId": partnerId,
@@ -196,6 +198,9 @@ exports.verifyEmail = async (req, res) => {
             "password": decoded.password,
           }
         } 
+
+      console.log("@@@@@@@@@@@@@", data);
+      
       axios.post(`${process.env.API_SERVER}/documentation/process/api/accounts/sync`, data, { headers } )
       .then(async accountRes => {
         user.accountUuid = accountRes.data.accountUuid;
@@ -203,7 +208,7 @@ exports.verifyEmail = async (req, res) => {
         return res.redirect(`${process.env.FRONT_ENTRY}/login`);
       }) 
       .catch(err => {
-        console.log("creating account error", err.response.data.message);
+        console.log("creating account error", err);
         // res.status(200).send("Email was verified successfully but didn't create a new CFD account!");
         return res.redirect(`${process.env.FRONT_ENTRY}/login`);
       })
@@ -280,14 +285,14 @@ exports.signin = (req, res) => {
         expiresIn: 3599 // 1 hours
       });
       const auth = {
-        "grant_type": "password",
-        "password": "abcd1234",
-        "username": "cfdprime-broker@integration.com",
+        "grant_type": process.env.AUTH_GRANTTYPE,
+        "password": process.env.AUTH_PASSWORD,
+        "username": process.env.AUTH_USERNAME,
       }
       let headers = {
           "Content-Type": "application/x-www-form-urlencoded",
-          "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
-          "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
+          "Authorization": process.env.AUTH_AUTHORIZATION,
+          "Cookie": process.env.AUTH_COOKIE
       }
       let email =req.body.email;
       axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
@@ -321,12 +326,11 @@ exports.signin = (req, res) => {
           })              
       })
       .catch(e => {
-        //console.log(e);
+        console.log(e);
         res.status(500).send({
           message: "Admin signin error"
         });
       })
-
     });
 };
 exports.getAdmins = (req, res) => {
@@ -422,14 +426,14 @@ exports.adminSignin = (req, res) => {
         expiresIn: 3599 // 1 hours
       });
       const auth = {
-        "grant_type": "password",
-        "password": "abcd1234",
-        "username": "cfdprime-broker@integration.com",
+        "grant_type": process.env.AUTH_GRANTTYPE,
+        "password": process.env.AUTH_PASSWORD,
+        "username": process.env.AUTH_USERNAME,
       }
       let headers = {
           "Content-Type": "application/x-www-form-urlencoded",
-          "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
-          "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
+          "Authorization": process.env.AUTH_AUTHORIZATION,
+          "Cookie": process.env.AUTH_COOKIE
       }
       let email =req.body.email;
       axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
@@ -456,4 +460,57 @@ exports.adminSignin = (req, res) => {
       })
 
     });
+};
+
+exports.sendWithdrawVerifyCode = (req, res) => {
+  var minm = 10000;
+  var maxm = 99999;
+  var code = Math.floor(Math.random() * (maxm - minm + 1)) + minm;
+  readHTMLFile(__dirname + '/../public/email_template/Verify_code.html', function(err, html) {
+    if (err) {
+      console.log('error reading file', err);
+      return;
+    }
+    var template = handlebars.compile(html);
+    var replacements = {
+      VERIFY_CODE: code,
+    };
+    var htmlToSend = template(replacements);
+    var mailOptions = {
+      from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+      to : req.query.email,
+      subject : "Verify withdraw code",
+      html : htmlToSend
+    };
+    smtpTransport.sendMail(mailOptions, function(error, response){
+        if(error){
+            console.log(error);
+        }else{
+            console.log("Message sent: " + response.response);
+            let cur_moment = moment()
+            sessions.withdraw_verify_code = code;
+            sessions.moment = cur_moment;
+
+            console.log(cur_moment, code);
+        }
+    });
+  });
+  res.status(200).send("Withdraw verification code was sent successfully. Please check your email." + code);
+};
+
+exports.verifyWithdrawCode = (req, res) => {
+  let cur_moment = moment();
+  let timeDifference = cur_moment.diff(sessions.moment, 'seconds')
+  if ( timeDifference > 30 * 60 ) { // expired after 30min
+    res.status(200).send({ 
+      "status" : 0,
+      "msg" : "Expired verification code. Try to send again"
+    });
+  }
+  res.status(200).send({ 
+    "status" : 1, 
+    "Code" : sessions.withdraw_verify_code,
+    "TimeDiff" : timeDifference,
+    "msg" : "Success to get verification code"
+  });
 };

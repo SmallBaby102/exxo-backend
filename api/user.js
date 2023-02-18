@@ -2,11 +2,13 @@ var router = require("express").Router();
 const { authJwt, verifySignUp } = require("../middlewares");
 const { upload } = require("../controllers/controllers");
 const { webhook, getUsers, removeUsers, updateUsers, getTradingAccounts, getOffers, createTradingAccount, 
-    createWalletOfAllTradingAccounts, changePassword, verifyProfile, updateStatus, internalTransfer, getTradingAccountBalance } = require("../controllers/user");
+    createWalletOfAllTradingAccounts, changePassword, verifyProfile, updateStatus, 
+    internalTransfer, getTradingAccountBalance, getTradingAccountTransactions } = require("../controllers/user");
 
 router.get("/users", [ authJwt.verifyToken ], getUsers);
 router.get("/offers", [ authJwt.verifyToken ], getOffers);
 router.get("/tradingAccounts", [ authJwt.verifyToken ], getTradingAccounts);
+router.get("/tradingAccountTransactions", [ authJwt.verifyToken ], getTradingAccountTransactions);
 router.get("/tradingAccount/balance", [ authJwt.verifyToken ], getTradingAccountBalance);
 router.post("/tradingAccount", [ authJwt.verifyToken ], createTradingAccount);
 router.post("/walletOfAllTradingAccounts", createWalletOfAllTradingAccounts);

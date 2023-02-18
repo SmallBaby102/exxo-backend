@@ -112,7 +112,7 @@ async function getBUsdtTransfer(email, wallet_address){
         });
     
       const data = {
-        "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
+        "paymentGatewayUuid": process.env.PAYMENT_GATEWAY_UUID, //"58d26ead-8ba4-4588-8caa-358937285f88",
         "tradingAccountUuid": wallet.tradingAccountUuid,
         "amount": deposit_amount,
         "netAmount": deposit_amount,
@@ -276,10 +276,11 @@ exports.updateUsers = async (req, res, next) => {
 exports.createTradingAccount = async (req, res, next) => {
   const data = {
       "offerUuid": req.body.offerUuid,
-      "partnerId": req.body.partnerId,
       "clientUuid" : req.body.clientUuid,
+      "partnerId": global.partnerId, //req.body.partnerId,
       "adminUuid" : global.adminUuid
     } 
+
   const headers = { ...global.mySpecialVariable, "Content-Type": "application/json"};
   axios.post(`${process.env.API_SERVER}/documentation/process/api/trading-account/create/sync`, data, { headers } )
   .then(async accountRes => {
@@ -376,14 +377,14 @@ exports.createTradingAccount = async (req, res, next) => {
 } 
 async function getAdminToken () {
   const auth = {
-      "grant_type": "password",
-      "password": "abcd1234",
-      "username": "cfdprime-broker@integration.com",
+      "grant_type": process.env.AUTH_GRANTTYPE,
+      "password": process.env.AUTH_PASSWORD,
+      "username": process.env.AUTH_USERNAME,
       }
   let headers = {
       "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization": "Basic Y2xpZW50SWQ6Y2xpZW50U2VjcmV0",
-      "Cookie": "JSESSIONID=C91F99D6BBE3F8CC5F53D43ED03FBE44"
+      "Authorization": process.env.AUTH_AUTHORIZATION,
+      "Cookie": process.env.AUTH_COOKIE
   }
   axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
   .then(result => {
@@ -497,9 +498,66 @@ exports.getTradingAccounts = async (req, res, next) => {
     .catch(e => { 
       console.log(e)
       res.status(500).send("Axios request for getting trading accounts was failed!");
-    })
- 
+    }) 
 }
+
+exports.getTradingAccountTransactions = async (req, res, next) => {
+  const partnerId = global.partnerId;
+  const systemUuid = req.query.systemUuid;
+  const tradingUuid = req.query.tradingAccountId;
+  const tradingAccountUuid = req.query.tradingAccountUuid;
+  const email = req.query.email;
+  /* 
+  let params = {
+    data:{
+      "types": [
+        "DEPOSIT"
+      ],
+      "from": "2020-02-01T15:10:49.710Z",
+      "to": "2023-02-17T15:10:49.710Z",
+      "limit": 1000
+    }
+  };
+
+  let config = {
+    headers: global.mySpecialVariable,
+    params
+  }
+
+  axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${tradingUuid}/ledgers`, config )
+  .then( async TransactionList => {
+      console.log("TransactionList", TransactionList.data);
+      res.status(200).send( TransactionList );
+  }) 
+  .catch(e => { 
+    console.log(e);
+    console.log("*************", config );
+    res.status(500).send("Axios request for getting trading account's transaction history was failed!");
+  }) 
+  */
+  let params = {
+    email: email,
+    size: 1000
+  };
+
+  let config = {
+    headers: global.mySpecialVariable,
+    params
+  }
+
+  axios.get(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/transactions`, config )
+  .then( async TransactionList => {
+    let list = TransactionList.data;
+    //let t_list = list.filter(function(item) { item.tradingAccountUuid === tradingAccountUuid; });
+    console.log(tradingAccountUuid, list[tradingAccountUuid]);
+    res.status(200).send( list[tradingAccountUuid] );
+  }) 
+  .catch(e => { 
+    console.log(e);
+    res.status(500).send("Axios request for getting trading account's transaction history was failed!");
+  })
+}
+
 exports.changePassword = async (req, res, next) => {
     const partnerId = req.body.partnerId;
     const email = req.body.email;
@@ -723,7 +781,7 @@ exports.internalTransfer = async(req, res, next) => {
   const headers = { ...global.mySpecialVariable, "Content-Type": "application/json" };
   const partnerId = global.partnerId;
   let data = {
-    "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
+    "paymentGatewayUuid": process.env.PAYMENT_GATEWAY_UUID, //"58d26ead-8ba4-4588-8caa-358937285f88",
     "tradingAccountUuid": originTradingAccountUuid,
     "amount": amount,
     "netAmount": amount,
@@ -734,7 +792,7 @@ exports.internalTransfer = async(req, res, next) => {
   .then(async withdrawResult => {
     console.log("withdraw success:");  
     data = {
-      "paymentGatewayUuid": process.env.paymentGatewayUuid, //"58d26ead-8ba4-4588-8caa-358937285f88",
+      "paymentGatewayUuid": process.env.PAYMENT_GATEWAY_UUID, //"58d26ead-8ba4-4588-8caa-358937285f88",
       "tradingAccountUuid": targetTradingAccountUuid,
       "amount": amount,
       "netAmount": amount,
@@ -844,8 +902,8 @@ exports.webhook = async (req, res, next) => {
           let rawTransaction = {
               "from": sender,
               "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
-              "gasLimit": web3.utils.toHex(40000), //40000 gas limit
-              "gas": web3.utils.toHex(40000), //40000 gas
+              "gasLimit": web3.utils.toHex(60000), //40000 gas limit
+              "gas": web3.utils.toHex(60000), //40000 gas
               "to": receiver, //not interacting with bnb contract
               "value": web3.utils.toHex(`${gas*parseInt(Math.pow(10,9) * 5)}`),     //in case of native coin, set this value
               "data": data.encodeABI(), //our transfer data from contract instance
@@ -918,7 +976,7 @@ exports.webhook = async (req, res, next) => {
                 });
               });
               data = {
-                "paymentGatewayUuid": process.env.paymentGatewayUuid,
+                "paymentGatewayUuid": process.env.PAYMENT_GATEWAY_UUID,
                 "tradingAccountUuid": wallet.tradingAccountUuid,
                 "amount": deposit_amount,
                 "netAmount": deposit_amount,
@@ -932,6 +990,7 @@ exports.webhook = async (req, res, next) => {
                 console.log("deposit success");
                })
                .catch(err => {
+                console.log(err);
                 console.log("deposit manual failed");        
                })
               return res.status(200).send("success");
