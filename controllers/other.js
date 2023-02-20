@@ -2,6 +2,7 @@
 const axios = require('axios');
 const User = require('../models/user.js');
 const CryptoRate = require('../models/crypto_rate.js');
+const SysSetting = require('../models/setting.js');
 const nodemailer = require("nodemailer");
 const handlebars = require('handlebars');
 
@@ -33,10 +34,11 @@ let smtpTransport = nodemailer.createTransport({
 
 exports.getSetting = async (req, res, next) => {
   try {
+    const sysSetting = await SysSetting.findOne({});
     const cryptoRates = await CryptoRate.find({});
     const payments = await PaymentMethod.find({});
     const adminWallet = await AdminWallet.findOne({});
-    return res.status(200).send({ cryptoRates: cryptoRates, paymentMethods : payments, adminWallet: adminWallet });
+    return res.status(200).send({ sysSetting: sysSetting, cryptoRates: cryptoRates, paymentMethods : payments, adminWallet: adminWallet });
   } catch (error) {
     return res.status(500).send({ message: "error" });
   }
@@ -63,6 +65,17 @@ exports.getWithdraw = async (req, res, next) => {
     return res.status(500).send({ message: "error" });
   }
 }
+
+exports.getWithdrawDetail = async (req, res, next) => {
+  console.log(req.query)
+  try {
+    let withdrawDetail = await Withdraw.findOne({_id : req.query.id});
+    return res.status(200).send(withdrawDetail);
+  } catch (error) {
+    return res.status(500).send({ message: "error" });
+  }
+}
+
 exports.removeSetting = async (req, res, next) => {
   User.findOneAndRemove({ _id: req.params.id}, function(err, result) {
     if (err) {
@@ -77,6 +90,9 @@ exports.updateSetting = async (req, res, next) => {
   try {
     const setting = req.body.setting;
     const admin_wallet = req.body.adminWallet;
+    const sys_setting = req.body.sysSetting;
+
+    // update crypto rate
     let cryptoRate = await CryptoRate.findOne({pair: "usdtPrice" });
     if (!cryptoRate) {
       cryptoRate = new CryptoRate({
@@ -88,6 +104,18 @@ exports.updateSetting = async (req, res, next) => {
     }
     await cryptoRate.save();
 
+    // update system settings
+    let sysSetting = await SysSetting.findOne();
+    if (!sysSetting) {
+      sysSetting = new SysSetting({
+        telegram : sys_setting.telegram
+      });
+    } else {
+      sysSetting.telegram = sys_setting.telegram;
+    }
+    await sysSetting.save();
+
+    // update admin wallet info
     let adminWallet = await AdminWallet.findOne({});
     if (!adminWallet) {
       adminWallet = new AdminWallet({
@@ -172,9 +200,13 @@ exports.updateWithdraw = async (req, res, next) => {
   try
   {
     const id = req.body.id;
-    let amount = req.body.amount;
-    let email = req.body.email;
+    let amount  = req.body.amount;
+    let email   = req.body.email;
+    let method  = req.body.method;
     let address = req.body.address;
+    if ( method === "Vietnam Bank Transfer" ) {
+      address = req.body.benificiaryName + " ( " + req.body.bankName + ", " + req.body.bankAccount + " ) ";
+    }
 
     // confirm withdraw verification code first
     let cur_moment = moment();
@@ -200,11 +232,12 @@ exports.updateWithdraw = async (req, res, next) => {
       } 
 
       withdraw = new Withdraw({
-        email: email,
-        amount: amount,
-        address: address,
-        currency: "USD",
-        tradingAccountId: req.body.tradingAccountId,
+        email:              email,
+        amount:             amount,
+        method:             method,
+        address:            address,
+        currency:           "USD",
+        tradingAccountId:   req.body.tradingAccountId,
         tradingAccountUuid: req.body.tradingAccountUuid,
       });
       await withdraw.save();
@@ -310,7 +343,7 @@ exports.updateWithdraw = async (req, res, next) => {
           message: "success"
         });
       })
-      .catch(async err => {
+      .catch(async err => {        
         withdraw.status = "Failed";
         console.log("withdraw failed:", err);   
         await withdraw.save();
@@ -319,9 +352,10 @@ exports.updateWithdraw = async (req, res, next) => {
           message: "error"
         });
       })
-    } else {
-      await withdraw.save();
+    } else {      
       if (req.body.status === "Rejected") {
+        withdraw.decline_reason = req.body.decline_reason;
+        await withdraw.save();
         readHTMLFile(__dirname + '/../public/email_template/Withdraw_declined.html', function(err, html) {
           if (err) {
               console.log('error reading file', err);
@@ -331,6 +365,7 @@ exports.updateWithdraw = async (req, res, next) => {
           var replacements = {
             AMOUNT: amount,
             TRADING_ACCOUNT_ID: withdraw.tradingAccountId,
+            DECLINE_REASON: withdraw.decline_reason, 
             REMARK: withdraw.remark
           };
           var htmlToSend = template(replacements);

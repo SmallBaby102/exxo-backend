@@ -13,7 +13,7 @@ router.get("/tradingAccount/balance", [ authJwt.verifyToken ], getTradingAccount
 router.post("/tradingAccount", [ authJwt.verifyToken ], createTradingAccount);
 router.post("/walletOfAllTradingAccounts", createWalletOfAllTradingAccounts);
 router.post("/status/:id", [ authJwt.verifyToken ], updateStatus);
-router.post("/verifyProfile", upload.fields([{ name: "frontImg", maxCount: 1},{name: "backImg", maxCount: 1 }]), verifyProfile);
+router.post("/verifyProfile", upload.fields([{ name: "frontImg", maxCount: 1},{name: "backImg", maxCount: 1 }, {name: "proofOfResident", maxCount: 1 }]), verifyProfile);
 router.post("/checkDuplicateUsernameOrEmail",  verifySignUp.checkDuplicateUsernameOrEmail, (req, res) => { res.status(200).send(true)} );
 router.post("/users/:id", [ authJwt.verifyToken ], updateUsers);
 router.post("/changePassword", [ authJwt.verifyToken ], changePassword);

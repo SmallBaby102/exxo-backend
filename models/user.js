@@ -17,8 +17,10 @@ const User = mongoose.model(
     address: String,
     postalCode: String,
     docType: String,         
+    docType2: String,         
     docUrl1: String,
     docUrl2: String,
+    docUrl3: String,
     remark: String,
     submittedAt: {type: Date, default: Date.now},
     verification_status: { type: String, default: 'New' },   //New, Pending, Approved, Rejected (KYC status)

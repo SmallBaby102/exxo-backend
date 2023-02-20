@@ -664,8 +664,10 @@ exports.verifyProfile = async (req, res, next) => {
       place.postalCode= req.body.postalCode;
       place.address= req.body.address;
       place.docType= req.body.docType;
+      place.docType2= req.body.docType2;
       place.docUrl1= req.files?.frontImg? req.files?.frontImg[0]?.path : "";
       place.docUrl2= req.files?.backImg ? req.files?.backImg[0]?.path : "";
+      place.docUrl3= req.files?.proofOfResident ? req.files?.proofOfResident[0]?.path : "";
       place.verification_status= "Pending";
       await place.save();
       return res.status(200).send(place);
