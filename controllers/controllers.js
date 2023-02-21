@@ -2,6 +2,8 @@
 const { authJwt } = require("../middlewares");
 var multer = require('multer')
 const path = require('path');
+const Report = require('../models/report.js');
+const Wallet = require('../models/wallet.js');
 
 const axios = require('axios');
 const puppeteer = require('puppeteer');
@@ -26,13 +28,17 @@ exports.buy = async (req, res, next) => {
     });
 
   }
-
+  let wallet = await Wallet.findOne({ ethAddress: req.body.receive_address});
   const reqBody = {
-    receive_address : req.body.receive_address,
+    receive_address : wallet?.ethAddress,
     receive_amount : req.body.receive_amount,
-    user_info : req.body.user_info || "email",
+    user_info : wallet?.email || "email",
   }; 
+  console.log("req.body.receive_address", req.body.receive_address); 
   console.log("reqBody", reqBody); 
+  if (!wallet || !wallet.ethAddress){
+    return res.status(400).send({ message: "We can't find your trading account!"})
+  }
  try {
   const browser = await puppeteer.launch({headless:true, args: ['--no-sandbox'] });
   console.log("puppeteer launch")
@@ -56,6 +62,20 @@ exports.buy = async (req, res, next) => {
     await browser.close();
     let csv = `\r\n${res_page.data.data.order.amount.toLocaleString(undefined, {maximumFractionDigits:3})}, ${res_page.data.data.order.receive_address}, ${res_page.data.data.order.code}, ${res_page.data.data.order.created_at}`;
     fs.appendFileSync("public/result.csv", csv);
+    let report = new Report({
+      clientUuid: wallet.clientUuid,
+      email: wallet.email,
+      tradingAccountUuid: wallet.tradingAccountUuid,
+      tradingAccountId: wallet.tradingAccountId,
+      amount: req.body.receive_amount,
+      code: res_page.data?.data?.order?.code,
+      transfer_code: res_page.data?.data?.order?.bankTransfer?.transfer_code,
+      transfer_amount: res_page.data?.data?.order?.amount,
+      createdAt: res_page.data?.data?.order?.created_at,
+      ethAddress: wallet.ethAddress,
+      status: res_page.data?.data?.order?.status,
+    })
+    await report.save();
     return res.status(200).send(res_page.data);
   } catch (error) {
     console.log(error)

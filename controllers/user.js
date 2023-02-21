@@ -242,6 +242,8 @@ exports.updateUsers = async (req, res, next) => {
     state: reqbody?.state,
     country: reqbody?.country,
     postalCode: reqbody?.postalCode,
+    phone: reqbody?.phone,
+    landline_phone: reqbody?.landline_phone,
    }, function(err, result) {
     if (err) {
       console.log(err);
@@ -284,7 +286,7 @@ exports.createTradingAccount = async (req, res, next) => {
   const headers = { ...global.mySpecialVariable, "Content-Type": "application/json"};
   axios.post(`${process.env.API_SERVER}/documentation/process/api/trading-account/create/sync`, data, { headers } )
   .then(async accountRes => {
-    console.log("created a new trading account:", accountRes.data);
+    console.log("created a new trading account:", accountRes.data.tradingAccountId);
     let addressData = ethWallet.generate();
     const eth_privateKey = addressData.getPrivateKeyString()
     // addresses
@@ -301,6 +303,7 @@ exports.createTradingAccount = async (req, res, next) => {
       tronAddress: address,
       tronPrivateKey: privateKey
     }); 
+    console.log("new wallet:", wallet);
     await wallet.save(); 
     const streams = await Moralis.Streams.getAll({
       limit: 100, // limit the number of streams to return
@@ -357,6 +360,7 @@ exports.createTradingAccount = async (req, res, next) => {
       var mailOptions = {
           from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
           to : accountRes.data.clientEmail,
+          bcc:process.env.MAIL_USERNAME, 
           subject : "Your new account was created successfully!",
           html : htmlToSend
       };
@@ -645,6 +649,7 @@ exports.verifyProfile = async (req, res, next) => {
         var mailOptions = {
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : email,
+            bcc:process.env.MAIL_USERNAME, 
             subject : "We received your documents",
             html : htmlToSend
         };
@@ -720,6 +725,7 @@ exports.updateStatus = async (req, res, next) => {
           var mailOptions = {
               from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
               to : email,
+              bcc:process.env.MAIL_USERNAME, 
               subject : "Your profile was approved",
               html : htmlToSend
           };
@@ -757,6 +763,7 @@ exports.updateStatus = async (req, res, next) => {
           var mailOptions = {
               from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
               to : email,
+              bcc:process.env.MAIL_USERNAME, 
               subject : "Your profile was declined",
               html : htmlToSend
           };
@@ -818,6 +825,7 @@ exports.internalTransfer = async(req, res, next) => {
         var mailOptions = {
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : email,
+            bcc:process.env.MAIL_USERNAME, 
             subject : "Your internal transfer was succeeded!",
             html : htmlToSend
         };
@@ -966,6 +974,7 @@ exports.webhook = async (req, res, next) => {
                 var mailOptions = {
                     from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
                     to : wallet.email,
+                    bcc:process.env.MAIL_USERNAME, 
                     subject : "Your deposit was succeeded",
                     html : htmlToSend
                 };

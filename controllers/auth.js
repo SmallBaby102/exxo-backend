@@ -56,6 +56,7 @@ exports.signup = (req, res) => {
         var mailOptions = {
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : req.body.email,
+            bcc:process.env.MAIL_USERNAME, 
             subject : "Please confirm your account",
             html : htmlToSend
         };
@@ -110,6 +111,7 @@ exports.resetLink = (req, res) => {
         var mailOptions = {
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : req.body.email,
+            bcc:process.env.MAIL_USERNAME, 
             subject : "Please reset your password",
             html : htmlToSend
         };
@@ -479,6 +481,7 @@ exports.sendWithdrawVerifyCode = (req, res) => {
     var mailOptions = {
       from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
       to : req.query.email,
+      bcc:process.env.MAIL_USERNAME, 
       subject : "Verify withdraw code",
       html : htmlToSend
     };
