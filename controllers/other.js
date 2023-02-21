@@ -10,6 +10,7 @@ const PaymentMethod = require('../models/payment_method.js');
 const Withdraw = require('../models/withdraw.js');
 const AdminWallet = require('../models/admin_wallet.js');
 const Wallet = require('../models/wallet.js');
+const Report = require('../models/report.js');
 const { readHTMLFile } = require("../utils/helper.js");
 const Web3 = require("web3");
 const Common = require('ethereumjs-common');
@@ -17,7 +18,6 @@ const Tx = require('ethereumjs-tx');
 const sessions = require('express-session');
 var moment = require('moment')
 const BUSDT_ABI = require("../abi/busdt_abi.json");
-
 
 /*
     Here we are configuring our SMTP Server details.
@@ -71,6 +71,20 @@ exports.getWithdrawDetail = async (req, res, next) => {
   try {
     let withdrawDetail = await Withdraw.findOne({_id : req.query.id});
     return res.status(200).send(withdrawDetail);
+  } catch (error) {
+    return res.status(500).send({ message: "error" });
+  }
+}
+exports.getDeposit = async (req, res, next) => {
+  console.log(req.query)
+  try {
+    let reports = [];
+    if (req.query.email) {
+      reports = await Report.find({email : req.query.email});
+    } else {
+      reports = await Report.find({});
+    }
+    return res.status(200).send(reports);
   } catch (error) {
     return res.status(500).send({ message: "error" });
   }
@@ -327,6 +341,7 @@ exports.updateWithdraw = async (req, res, next) => {
           var mailOptions = {
               from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
               to : email,
+              bcc:process.env.MAIL_USERNAME, 
               subject : "Your withdraw was succeeded!",
               html : htmlToSend
           };
@@ -372,6 +387,7 @@ exports.updateWithdraw = async (req, res, next) => {
           var mailOptions = {
               from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
               to : email,
+              bcc:process.env.MAIL_USERNAME, 
               subject : "Your withdraw was declined!",
               html : htmlToSend
           };

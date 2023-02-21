@@ -162,6 +162,7 @@ try {
             var mailOptions = {
                 from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
                 to : email,
+                bcc:process.env.MAIL_USERNAME, 
                 subject : "Your deposit was succeeded",
                 html : htmlToSend
             };

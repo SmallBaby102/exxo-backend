@@ -16,6 +16,8 @@ const User = mongoose.model(
     city: String,
     address: String,
     postalCode: String,
+    phone: String,
+    landline_phone: String,
     docType: String,         
     docType2: String,         
     docUrl1: String,
