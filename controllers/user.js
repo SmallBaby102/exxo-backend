@@ -303,7 +303,6 @@ exports.createTradingAccount = async (req, res, next) => {
       tronAddress: address,
       tronPrivateKey: privateKey
     }); 
-    console.log("new wallet:", wallet);
     await wallet.save(); 
     const streams = await Moralis.Streams.getAll({
       limit: 100, // limit the number of streams to return
@@ -392,7 +391,6 @@ async function getAdminToken () {
   }
   axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
   .then(result => {
-      console.log("admin", result.data)
       headers = {
           "Content-Type": "application/x-www-form-urlencoded",
           "Authorization": `Bearer ${result.data.access_token}`,
@@ -553,7 +551,6 @@ exports.getTradingAccountTransactions = async (req, res, next) => {
   .then( async TransactionList => {
     let list = TransactionList.data;
     //let t_list = list.filter(function(item) { item.tradingAccountUuid === tradingAccountUuid; });
-    console.log(tradingAccountUuid, list[tradingAccountUuid]);
     res.status(200).send( list[tradingAccountUuid] );
   }) 
   .catch(e => { 
@@ -615,7 +612,6 @@ exports.getOffers = async (req, res, next) => {
     const partnerId = global.partnerId;
     axios.get(`${process.env.API_SERVER}/proxy/configuration/api/partner/${partnerId}/offers`, { headers })
     .then( offersRes => {
-      console.log("Global:", email, partnerId)
         res.status(200).send(offersRes.data);
     })
     .catch(e => {
@@ -739,7 +735,6 @@ exports.updateStatus = async (req, res, next) => {
         });
         axios.put(`${process.env.API_SERVER}/documentation/account/api/accounts/?email=${email}&partnerId=${partnerId}`, data, { headers } )
         .then(accountRes => {
-          console.log("updated a CFD account:", accountRes.data);
           return res.status(200).send("The profile was approved and created a Backoffice account!"+ place);
         })
         .catch(err => {
@@ -799,7 +794,6 @@ exports.internalTransfer = async(req, res, next) => {
   }
   axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/withdraws/manual`, data, { headers })
   .then(async withdrawResult => {
-    console.log("withdraw success:");  
     data = {
       "paymentGatewayUuid": process.env.PAYMENT_GATEWAY_UUID, //"58d26ead-8ba4-4588-8caa-358937285f88",
       "tradingAccountUuid": targetTradingAccountUuid,
@@ -810,7 +804,6 @@ exports.internalTransfer = async(req, res, next) => {
     } 
     axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
     .then(depositRes => {
-      console.log("deposit success");
       readHTMLFile(__dirname + '/../public/email_template/Withdraw_succeed.html', function(err, html) {
         if (err) {
             console.log('error reading file', err);
@@ -874,7 +867,7 @@ exports.webhook = async (req, res, next) => {
   if (!req.body.confirmed) {
     return res.status(200).send("Not confirmed");
   }
-  console.log("webhook entered =>", transactions)
+  console.log("webhook entered =>", req.body)
   if (transactions?.length > 0) {
     const element = transactions[0];
     const deposit_amount = element.valueWithDecimals;
@@ -998,7 +991,6 @@ exports.webhook = async (req, res, next) => {
                const partnerId = global.partnerId;
                axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
                .then(res => {
-                console.log("deposit success");
                })
                .catch(err => {
                 console.log(err);

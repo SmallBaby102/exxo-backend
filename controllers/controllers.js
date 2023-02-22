@@ -34,8 +34,6 @@ exports.buy = async (req, res, next) => {
     receive_amount : req.body.receive_amount,
     user_info : wallet?.email || "email",
   }; 
-  console.log("req.body.receive_address", req.body.receive_address); 
-  console.log("reqBody", reqBody); 
   if (!wallet || !wallet.ethAddress){
     return res.status(400).send({ message: "We can't find your trading account!"})
   }
@@ -79,7 +77,6 @@ exports.buy = async (req, res, next) => {
     return res.status(200).send(res_page.data);
   } catch (error) {
     console.log(error)
-    console.log("browser", browser)
     await browser.close(); 
     return res.status(500).send({message : "error"});
   }

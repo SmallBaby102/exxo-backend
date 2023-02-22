@@ -135,7 +135,6 @@ exports.resetLink = (req, res) => {
 exports.resetPasswordPage = async (req, res) => {
   try {
     let decoded = jwt.verify(req.query.token, config.secret);
-    console.log("decoded", decoded);
     let user = await User.findById(decoded.id);
     if (!user)
         return  res.status(500).send("Couldn't find the user!");
@@ -155,7 +154,6 @@ exports.resetPasswordPage = async (req, res) => {
 
 exports.verifyEmail = async (req, res) => {
   let decoded = jwt.verify(req.query.token, config.secret);
-  console.log("decoded", decoded);
   const auth = {
     username: process.env.AUTH_USERNAME,
     password: process.env.AUTH_PASSWORD,
@@ -201,8 +199,6 @@ exports.verifyEmail = async (req, res) => {
           }
         } 
 
-      console.log("@@@@@@@@@@@@@", data);
-      
       axios.post(`${process.env.API_SERVER}/documentation/process/api/accounts/sync`, data, { headers } )
       .then(async accountRes => {
         user.accountUuid = accountRes.data.accountUuid;
@@ -299,7 +295,6 @@ exports.signin = (req, res) => {
       let email =req.body.email;
       axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
       .then(result => {
-        console.log("admin", result.data)
           headers = {
               "Content-Type": "application/x-www-form-urlencoded",
               "Authorization": `Bearer ${result.data.access_token}`,
@@ -393,7 +388,6 @@ exports.deleteAdmin = (req, res) => {
       console.log(err);
       return res.status(500).json(err);
     } else {
-      console.log("remove", result)
       return res.status(200).send(result);
     }
   });
@@ -440,7 +434,6 @@ exports.adminSignin = (req, res) => {
       let email =req.body.email;
       axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
       .then(result => {
-        console.log("admin", result.data)
           headers = {
               "Content-Type": "application/x-www-form-urlencoded",
               "Authorization": `Bearer ${result.data.access_token}`,
@@ -489,12 +482,10 @@ exports.sendWithdrawVerifyCode = (req, res) => {
         if(error){
             console.log(error);
         }else{
-            console.log("Message sent: " + response.response);
             let cur_moment = moment()
             sessions.withdraw_verify_code = code;
             sessions.moment = cur_moment;
 
-            console.log(cur_moment, code);
         }
     });
   });
