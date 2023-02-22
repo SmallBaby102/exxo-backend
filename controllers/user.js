@@ -894,7 +894,7 @@ exports.webhook = async (req, res, next) => {
           const balance = await usdtContract.methods.balanceOf(receiver).call();
           const amount =  web3.utils.toHex(balance);
           let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
-          gas += 10000;
+          gas += 50000;
           let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
           let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
           let chain = {
