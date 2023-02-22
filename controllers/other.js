@@ -67,7 +67,6 @@ exports.getWithdraw = async (req, res, next) => {
 }
 
 exports.getWithdrawDetail = async (req, res, next) => {
-  console.log(req.query)
   try {
     let withdrawDetail = await Withdraw.findOne({_id : req.query.id});
     return res.status(200).send(withdrawDetail);
@@ -76,7 +75,6 @@ exports.getWithdrawDetail = async (req, res, next) => {
   }
 }
 exports.getDeposit = async (req, res, next) => {
-  console.log(req.query)
   try {
     let reports = [];
     if (req.query.email) {
