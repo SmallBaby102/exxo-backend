@@ -894,7 +894,7 @@ exports.webhook = async (req, res, next) => {
           const balance = await usdtContract.methods.balanceOf(receiver).call();
           const amount =  web3.utils.toHex(balance);
           let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
-
+          gas += 10000;
           let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
           let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
           let chain = {
@@ -905,8 +905,8 @@ exports.webhook = async (req, res, next) => {
           let rawTransaction = {
               "from": sender,
               "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
-              "gasLimit": web3.utils.toHex(60000), //40000 gas limit
-              "gas": web3.utils.toHex(60000), //40000 gas
+              "gasLimit": web3.utils.toHex(60000), //gas limit
+              "gas": web3.utils.toHex(60000), //gas
               "to": receiver, //not interacting with bnb contract
               "value": web3.utils.toHex(`${gas*parseInt(Math.pow(10,9) * 5)}`),     //in case of native coin, set this value
               "data": data.encodeABI(), //our transfer data from contract instance
@@ -938,7 +938,7 @@ exports.webhook = async (req, res, next) => {
               let rawTransaction = {
                   "from": sender,
                   "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
-                  "gasLimit": web3.utils.toHex(40000), //40000 gas limit
+                  "gasLimit": web3.utils.toHex(gas), // gas limit
                   "gas": web3.utils.toHex(gas),
                   "to": busdt, //interacting with busdt contract
                   // "value": web3.utils.BN(web3.utils.toWei(element.value, 'ether')), //no need this value interacting with nopayable function of contract
