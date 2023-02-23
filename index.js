@@ -321,7 +321,6 @@ app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT} .`);
     getAdminToken();
     
-    /*
     Moralis.start({
         apiKey: process.env.MORALIS_KEY ,
     });
@@ -356,5 +355,4 @@ app.listen(PORT, async () => {
     if ( wallet_addresses.length > 0 ) {
         request(wallet_addresses);
     }  
-    */
 }); 

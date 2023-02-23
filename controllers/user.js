@@ -1024,7 +1024,7 @@ exports.requestIB = async (req, res, next) => {
       console.log(err);
       return res.status(500).json(err);
     } else {
-      if ( result == null ) {
+      if ( result === null ) {
         return res.status(500).json({status: 0, message: "There is an error!"});
       }
       result.ibStatus                 = "Pending";
