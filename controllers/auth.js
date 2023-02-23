@@ -26,11 +26,12 @@ let smtpTransport = nodemailer.createTransport({
 exports.signup = (req, res) => {
   try {
     let user = new User({
-      fullname: req.body.fullname,
-      email: req.body.email,
-      countryCode: req.body.countryCode,
-      phone: req.body.phone,
-      password: bcrypt.hashSync(req.body.password, 8)
+      fullname:                   req.body.fullname,
+      email:                      req.body.email,
+      countryCode:                req.body.countryCode,
+      phone:                      req.body.phone,
+      password:                   bcrypt.hashSync(req.body.password, 8),
+      ibParentTradingAccountUuid: req.body.ibuuid,
     });
   
     user.save((err, user) => {
@@ -204,7 +205,7 @@ exports.verifyEmail = async (req, res) => {
         user.accountUuid = accountRes.data.accountUuid;
         await user.save();
         return res.redirect(`${process.env.FRONT_ENTRY}/login`);
-      }) 
+      })
       .catch(err => {
         console.log("creating account error", err);
         // res.status(200).send("Email was verified successfully but didn't create a new CFD account!");

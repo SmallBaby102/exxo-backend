@@ -320,13 +320,13 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT} .`);
     getAdminToken();
+    
     Moralis.start({
         apiKey: process.env.MORALIS_KEY ,
     });
     const streams = await Moralis.Streams.getAll({
         limit: 100, // limit the number of streams to return
     });
-
     
     const options = {
         method: 'DELETE',
@@ -354,6 +354,5 @@ app.listen(PORT, async () => {
     }
     if ( wallet_addresses.length > 0 ) {
         request(wallet_addresses);
-    }
-    
+    }    
 }); 
