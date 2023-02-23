@@ -219,9 +219,9 @@ exports.getUsers = async (req, res, next) => {
     } else {
       return res.status(200).send(result);
     }
-  });
- 
+  }); 
 }
+
 exports.removeUsers = async (req, res, next) => {
   User.findOneAndRemove({ _id: req.params.id}, function(err, result) {
     if (err) {
@@ -232,6 +232,7 @@ exports.removeUsers = async (req, res, next) => {
     } 
   });
 }
+
 exports.updateUsers = async (req, res, next) => {
   const reqbody = req.body.data;
   User.findOneAndUpdate({ _id: req.params.id}, { 
@@ -275,6 +276,7 @@ exports.updateUsers = async (req, res, next) => {
   });
 
 }
+
 exports.createTradingAccount = async (req, res, next) => {
   const data = {
       "offerUuid": req.body.offerUuid,
@@ -1009,4 +1011,88 @@ exports.webhook = async (req, res, next) => {
   } else {
     return res.status(200).send("Didn't get correct transactions");
   }
+}
+
+
+exports.requestIB = async (req, res, next) => {
+  const accountUuid = req.body.data.accountUuid;
+  let wallet = await Wallet.findOne({clientUuid: accountUuid });  
+  if ( wallet === null ) {
+    return res.status(200).send({status: 0, message: "Please add trading account before send IB request", account: null});
+    return;
+  }
+
+  let IBLink = process.env.FRONT_ENTRY + "/register?ibuuid=" + wallet.tradingAccountUuid;
+
+  User.findOneAndUpdate({ accountUuid: accountUuid}, { 
+    ibStatus:                   "Pending", 
+    parentTradingAccountUuid:   wallet.tradingAccountUuid, 
+    IBLink:                     IBLink, 
+   }, function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      if ( result == null ) {
+        return res.status(500).json({status: 0, message: "There is an error!"});
+      }
+      result.ibStatus                 = "Pending";
+      result.parentTradingAccountUuid = wallet.tradingAccountUuid;
+      result.IBLink                   = IBLink;
+      return res.status(200).send({status: 1, message: "Sent IB request successfully!", account: result});
+    }
+  });
+}
+
+exports.cancelIB = async (req, res, next) => {
+  const accountUuid = req.body.data.accountUuid;
+  User.findOneAndUpdate({ accountUuid: accountUuid}, { 
+    ibStatus:                   "New", 
+    parentTradingAccountUuid:   "", 
+   }, function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {      
+      result.ibStatus = "New";
+      result.parentTradingAccountUuid = "";
+      return res.status(200).send({message: "Sent IB cancel request successfully!", account: result});
+    }
+  });
+}
+
+exports.IBClients = async (req, res, next) => {
+  try {
+    let ibClients = [];
+    ibClients = await User.find({$or : [{ibStatus: "Pending"}, {ibStatus: "Approved"}, {ibStatus: "Declined"}]});
+    return res.status(200).send(ibClients);
+  } catch (error) {
+    return res.status(500).send({ message: "error" });
+  }
+}
+
+exports.updateIBStatus = async (req, res, next) => {
+  const reqbody = req.body;
+  User.findOneAndUpdate({ _id: reqbody?.id}, { 
+    ibStatus: reqbody?.ibStatus, 
+   }, function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      return res.status(200).send({message: "success"});
+    }
+  });
+}
+
+exports.getOwnIBClients = async (req, res, next) => {
+  let parentTradingAccountUuid = req.query.parentTradingAccountUuid;
+  User.find({ibParentTradingAccountUuid: parentTradingAccountUuid} , function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      return res.status(200).send(result);
+    }
+  }); 
 }

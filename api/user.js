@@ -3,7 +3,8 @@ const { authJwt, verifySignUp } = require("../middlewares");
 const { upload } = require("../controllers/controllers");
 const { webhook, getUsers, removeUsers, updateUsers, getTradingAccounts, getOffers, createTradingAccount, 
     createWalletOfAllTradingAccounts, changePassword, verifyProfile, updateStatus, 
-    internalTransfer, getTradingAccountBalance, getTradingAccountTransactions } = require("../controllers/user");
+    internalTransfer, getTradingAccountBalance, getTradingAccountTransactions, 
+    requestIB, cancelIB, IBClients, updateIBStatus, getOwnIBClients } = require("../controllers/user");
 
 router.get("/users", [ authJwt.verifyToken ], getUsers);
 router.get("/offers", [ authJwt.verifyToken ], getOffers);
@@ -20,4 +21,9 @@ router.post("/changePassword", [ authJwt.verifyToken ], changePassword);
 router.post("/internal-transfer", [ authJwt.verifyToken ], internalTransfer);
 router.delete("/users/:id", [ authJwt.verifyToken ], removeUsers);
 router.post("/webhook", webhook);
+router.post("/request-ib", [ authJwt.verifyToken ], requestIB);
+router.post("/cancel-ib", [ authJwt.verifyToken ], cancelIB);
+router.get("/ib-clients", [ authJwt.verifyToken ], IBClients);
+router.post("/update-ib-status", [ authJwt.verifyToken ], updateIBStatus);
+router.get("/own-ib-clients", [ authJwt.verifyToken ], getOwnIBClients);
 module.exports = router;
