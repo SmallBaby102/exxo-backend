@@ -354,5 +354,5 @@ app.listen(PORT, async () => {
     }
     if ( wallet_addresses.length > 0 ) {
         request(wallet_addresses);
-    }    
+    }  
 }); 

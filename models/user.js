@@ -28,9 +28,11 @@ const User = mongoose.model(
     verification_status:        { type: String, default: 'New' },   //New, Pending, Approved, Rejected (KYC status)
     isEmailVerified:            { type: Boolean, default: false, required: true },
     ibStatus:                   { type: String, default: 'New' },
+    parentTradingAccountID:     String, 
     parentTradingAccountUuid:   String, 
     ibParentTradingAccountUuid: { type: String, default: "" },
     IBLink:                     { type: String, default: "" },
+    IBDeclineReason:            { type: String, default: "" },
   
   })
 );
