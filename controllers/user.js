@@ -1028,8 +1028,6 @@ exports.requestIB = async (req, res, next) => {
         return res.status(500).json({status: 0, message: "There is an error!"});
       }
       result.ibStatus                 = "Pending";
-      result.parentTradingAccountUuid = wallet.tradingAccountUuid;
-      result.IBLink                   = IBLink;
       return res.status(200).send({status: 1, message: "Sent IB request successfully!", account: result});
     }
   });
