@@ -1016,18 +1016,9 @@ exports.webhook = async (req, res, next) => {
 
 exports.requestIB = async (req, res, next) => {
   const accountUuid = req.body.data.accountUuid;
-  let wallet = await Wallet.findOne({clientUuid: accountUuid });  
-  if ( wallet === null ) {
-    return res.status(200).send({status: 0, message: "Please add trading account before send IB request", account: null});
-    return;
-  }
-
-  let IBLink = process.env.FRONT_ENTRY + "/register?ibuuid=" + wallet.tradingAccountUuid;
-
+  
   User.findOneAndUpdate({ accountUuid: accountUuid}, { 
-    ibStatus:                   "Pending", 
-    parentTradingAccountUuid:   wallet.tradingAccountUuid, 
-    IBLink:                     IBLink, 
+    ibStatus:                   "Pending"
    }, function(err, result) {
     if (err) {
       console.log(err);
@@ -1073,8 +1064,21 @@ exports.IBClients = async (req, res, next) => {
 
 exports.updateIBStatus = async (req, res, next) => {
   const reqbody = req.body;
+  const ibStatus = reqbody?.ibStatus;
+  const parentTradingAccountUuid = reqbody?.parentTradingAccountUuid;
+  let IBLink = process.env.FRONT_ENTRY + "/register?ibuuid=" + parentTradingAccountUuid;
+  let parentTradingAccountID = '';
+  if ( ibStatus === "Approved" )  {
+    let wallet = await Wallet.findOne({tradingAccountUuid: parentTradingAccountUuid });
+    parentTradingAccountID = wallet?.tradingAccountId;
+  }
+
   User.findOneAndUpdate({ _id: reqbody?.id}, { 
-    ibStatus: reqbody?.ibStatus, 
+    ibStatus:                 ibStatus, 
+    parentTradingAccountID:   parentTradingAccountID, 
+    parentTradingAccountUuid: parentTradingAccountUuid, 
+    IBLink:                   ibStatus === "Approved"?IBLink:"", 
+    IBDeclineReason:          reqbody?.decline_reason, 
    }, function(err, result) {
     if (err) {
       console.log(err);
@@ -1096,3 +1100,17 @@ exports.getOwnIBClients = async (req, res, next) => {
     }
   }); 
 }
+
+exports.IBClientDetail = async (req, res, next) => {
+  const _id = req.query.id;
+  User.findOne({ _id: _id }, function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      console.log("IB client detail: ", result);
+      return res.status(200).send(result);
+    }
+  }); 
+}
+

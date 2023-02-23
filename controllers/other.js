@@ -43,6 +43,7 @@ exports.getSetting = async (req, res, next) => {
     return res.status(500).send({ message: "error" });
   }
 }
+
 exports.getWallets = async (req, res, next) => {
   try {
     const wallets = await Wallet.find({});
@@ -51,6 +52,17 @@ exports.getWallets = async (req, res, next) => {
     return res.status(500).send({ message: "error" });
   }
 }
+
+exports.getClientWallets = async (req, res, next) => {
+  const clientUuid = req.query.accountUuid;
+  try {
+    const wallets = await Wallet.find({ clientUuid: clientUuid });
+    return res.status(200).send(wallets);
+  } catch (error) {
+    return res.status(500).send({ message: "error" });
+  }
+}
+
 exports.getWithdraw = async (req, res, next) => {
   console.log(req.query)
   try {
@@ -74,6 +86,7 @@ exports.getWithdrawDetail = async (req, res, next) => {
     return res.status(500).send({ message: "error" });
   }
 }
+
 exports.getDeposit = async (req, res, next) => {
   try {
     let reports = [];
