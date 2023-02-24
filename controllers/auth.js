@@ -25,13 +25,17 @@ let smtpTransport = nodemailer.createTransport({
 
 exports.signup = (req, res) => {
   try {
+    const parentTradingAccountId    = req.body.ibid?req.body.ibid:""; 
+    const parentTradingAccountUuid  = req.body.ibuuid?req.body.ibuuid:"";
+
     let user = new User({
       fullname:                   req.body.fullname,
       email:                      req.body.email,
       countryCode:                req.body.countryCode,
       phone:                      req.body.phone,
       password:                   bcrypt.hashSync(req.body.password, 8),
-      ibParentTradingAccountUuid: req.body.ibuuid,
+      parentTradingAccountId:     parentTradingAccountId,
+      parentTradingAccountUuid:   parentTradingAccountUuid,
     });
   
     user.save((err, user) => {
@@ -40,10 +44,10 @@ exports.signup = (req, res) => {
         return;
       }
       let email = user.email;
-      let info = {id: user._id, email: email, fullname: user.fullname, countryCode: user.countryCode, password: req.body.password};
+      let info = {id: user._id, email: email, fullname: user.fullname, countryCode: user.countryCode, password: req.body.password, parentTradingAccountId: parentTradingAccountId, parentTradingAccountUuid: parentTradingAccountUuid};
       // The hash we will be sending to the user
       const token = jwt.sign(info, config.secret);
-      link="https://secure.exxomarkets.com/api/auth/verify?token="+token;
+      link = process.env.BACKEND_SERVER + "/api/auth/verify?token=" + token;
       readHTMLFile(__dirname + '/../public/email_template/Verify_email.html', function(err, html) {
         if (err) {
           console.log('error reading file', err);
@@ -97,7 +101,7 @@ exports.resetLink = (req, res) => {
       const token = jwt.sign(info, config.secret, {
         expiresIn: "1h"
       });
-      link="https://secure.exxomarkets.com/api/auth/reset-password?token="+token;
+      link = process.env.BACKEND_SERVER + "/api/auth/reset-password?token=" + token;
       readHTMLFile(__dirname + '/../public/email_template/FORGOT_PW.html', function(err, html) {
         if (err) {
           console.log('error reading file', err);
@@ -187,18 +191,22 @@ exports.verifyEmail = async (req, res) => {
       const partnerId = result.data.partnerId;
 
       const data = {
-          "branchUuid": process.env.BRANCH_UUID,
-          "adminUuid" :  result.data.account_uuid,
-          "account": {
-            "partnerId": partnerId,
-            "email" : decoded.email,
-            "name": decoded.fullname,
-            "surname": decoded.fullname,
-            "phone": decoded.phone,
-            "country": decoded.countryCode,
-            "password": decoded.password,
-          }
-        } 
+        "branchUuid": process.env.BRANCH_UUID,
+        "adminUuid" :  result.data.account_uuid,
+        "account": {
+          "partnerId":                  partnerId,
+          "email" :                     decoded.email,
+          "name":                       decoded.fullname,
+          "surname":                    decoded.fullname,
+          "phone":                      decoded.phone,
+          // "country":                 decoded.countryCode,
+          "password":                   decoded.password,
+          "parentTradingAccountId":     decoded.parentTradingAccountId,
+          "parentTradingAccountUuid":   decoded.parentTradingAccountUuid,
+        }
+      }
+
+      console.log("((((((((((((BO signup & verifyEmail))))))))))))", data);
 
       axios.post(`${process.env.API_SERVER}/documentation/process/api/accounts/sync`, data, { headers } )
       .then(async accountRes => {
@@ -307,13 +315,13 @@ exports.signin = (req, res) => {
           
           axios.get(`${process.env.API_SERVER}/documentation/account/api/partners/${partnerId}/accounts/by-email/?email=${email}`, { headers })
           .then( async accountRes => {
-            res.status(200).send({
+            console.log("login account info: ", accountRes);
+            res.status(200).send({              
+              ...accountRes.data,
               ...user._doc,
               partnerId: accountRes.data?.partnerId, 
-              ...accountRes.data,
               accessToken: token,
-            });
-              
+            });              
           })
           .catch(e => {
               console.log(e);
@@ -376,6 +384,7 @@ exports.updateAdmin = (req, res) => {
     }
   });
 }
+
 exports.deleteAdmin = (req, res) => {
   if(!req.body){
     return res.status(500).send({ message: "Request error!" });

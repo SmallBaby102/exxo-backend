@@ -288,23 +288,31 @@ exports.createTradingAccount = async (req, res, next) => {
   const headers = { ...global.mySpecialVariable, "Content-Type": "application/json"};
   axios.post(`${process.env.API_SERVER}/documentation/process/api/trading-account/create/sync`, data, { headers } )
   .then(async accountRes => {
-    console.log("created a new trading account:", accountRes.data.tradingAccountId);
+    console.log("created a new trading account:", accountRes.data);
     let addressData = ethWallet.generate();
     const eth_privateKey = addressData.getPrivateKeyString()
     // addresses
     const eth_address =  addressData.getAddressString()
     //Tron
     const { address, privateKey } = generateAccount()
+
+    const partnerId = global.partnerId;    
+    const offers = await axios.get(`${process.env.API_SERVER}/proxy/configuration/api/partner/${partnerId}/offers`, { headers });
+    const offer = offers.data?.find(offer => offer.uuid === accountRes.data.offerUuid);
+
     const wallet = new Wallet({
-      clientUuid: req.body.clientUuid,
-      email: accountRes.data.clientEmail,
-      tradingAccountUuid: accountRes.data.tradingAccountUuid,
-      tradingAccountId: accountRes.data.tradingAccountId,
-      ethAddress: eth_address,
-      ethPrivateKey: eth_privateKey,
-      tronAddress: address,
-      tronPrivateKey: privateKey
+      clientUuid:           req.body.clientUuid,
+      email:                accountRes.data.clientEmail,
+      tradingAccountUuid:   accountRes.data.tradingAccountUuid,
+      tradingAccountId:     accountRes.data.tradingAccountId,
+      ethAddress:           eth_address,
+      ethPrivateKey:        eth_privateKey,
+      tronAddress:          address,
+      tronPrivateKey:       privateKey,
+      offerUuid:            accountRes.data.offerUuid,
+      isDemo:               offer.demo,
     }); 
+
     await wallet.save(); 
     const streams = await Moralis.Streams.getAll({
       limit: 100, // limit the number of streams to return
@@ -624,6 +632,7 @@ exports.getOffers = async (req, res, next) => {
 }
 exports.verifyProfile = async (req, res, next) => {
   const email = req.body.email;
+  console.log("*****************", req.body);
   User.findOne({
     email: email
   }).exec(async function (err, place) {
@@ -663,6 +672,7 @@ exports.verifyProfile = async (req, res, next) => {
       place.birthday= req.body.dob;
       place.expDate= req.body.expDate;
       place.country= req.body.country;
+      place.state= req.body.state;
       place.city= req.body.city;
       place.postalCode= req.body.postalCode;
       place.address= req.body.address;
@@ -706,6 +716,7 @@ exports.updateStatus = async (req, res, next) => {
               "surname": place.fullname,
               "dateOfBirth" : place.birthday,
               "country" : place.country,
+              "state" : place.state,
               "city" : place.city,
               "postCode" : place.postalCode,
               "address" : place.address,
@@ -1063,20 +1074,21 @@ exports.IBClients = async (req, res, next) => {
 exports.updateIBStatus = async (req, res, next) => {
   const reqbody = req.body;
   const ibStatus = reqbody?.ibStatus;
-  const parentTradingAccountUuid = reqbody?.parentTradingAccountUuid;
-  let IBLink = process.env.FRONT_ENTRY + "/register?ibuuid=" + parentTradingAccountUuid;
-  let parentTradingAccountID = '';
+  const ibParentTradingAccountUuid = reqbody?.ibParentTradingAccountUuid;
+  let ibParentTradingAccountId = '';
   if ( ibStatus === "Approved" )  {
-    let wallet = await Wallet.findOne({tradingAccountUuid: parentTradingAccountUuid });
-    parentTradingAccountID = wallet?.tradingAccountId;
+    let wallet = await Wallet.findOne({tradingAccountUuid: ibParentTradingAccountUuid });
+    ibParentTradingAccountId = wallet?.tradingAccountId;
   }
 
+  let IBLink = process.env.FRONT_ENTRY + "/register?ibid=" + ibParentTradingAccountId + "&ibuuid=" + ibParentTradingAccountUuid;
+
   User.findOneAndUpdate({ _id: reqbody?.id}, { 
-    ibStatus:                 ibStatus, 
-    parentTradingAccountID:   parentTradingAccountID, 
-    parentTradingAccountUuid: parentTradingAccountUuid, 
-    IBLink:                   ibStatus === "Approved"?IBLink:"", 
-    IBDeclineReason:          reqbody?.decline_reason, 
+    ibStatus:                   ibStatus, 
+    ibParentTradingAccountId:   ibParentTradingAccountId, 
+    ibParentTradingAccountUuid: ibParentTradingAccountUuid, 
+    IBLink:                     ibStatus === "Approved"?IBLink:"", 
+    IBDeclineReason:            reqbody?.decline_reason, 
    }, function(err, result) {
     if (err) {
       console.log(err);
@@ -1089,7 +1101,7 @@ exports.updateIBStatus = async (req, res, next) => {
 
 exports.getOwnIBClients = async (req, res, next) => {
   let parentTradingAccountUuid = req.query.parentTradingAccountUuid;
-  User.find({ibParentTradingAccountUuid: parentTradingAccountUuid} , function(err, result) {
+  User.find({parentTradingAccountUuid: parentTradingAccountUuid, verification_status:"Approved"} , function(err, result) {
     if (err) {
       console.log(err);
       return res.status(500).json(err);
