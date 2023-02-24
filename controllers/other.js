@@ -55,8 +55,9 @@ exports.getWallets = async (req, res, next) => {
 
 exports.getClientWallets = async (req, res, next) => {
   const clientUuid = req.query.accountUuid;
+  const isDemo = req.query.isDemo;
   try {
-    const wallets = await Wallet.find({ clientUuid: clientUuid });
+    const wallets = await Wallet.find({ clientUuid: clientUuid, isDemo: isDemo });
     return res.status(200).send(wallets);
   } catch (error) {
     return res.status(500).send({ message: "error" });
