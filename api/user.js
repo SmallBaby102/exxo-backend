@@ -4,7 +4,8 @@ const { upload } = require("../controllers/controllers");
 const { webhook, getUsers, removeUsers, updateUsers, getTradingAccounts, getOffers, createTradingAccount, 
     createWalletOfAllTradingAccounts, changePassword, verifyProfile, updateStatus, 
     internalTransfer, getTradingAccountBalance, getTradingAccountTransactions, 
-    requestIB, cancelIB, IBClients, updateIBStatus, getOwnIBClients, IBClientDetail } = require("../controllers/user");
+    requestIB, cancelIB, IBClients, updateIBStatus, getOwnIBClients, IBClientDetail,
+    getIBParentTradingAccountDeposits } = require("../controllers/user");
 
 router.get("/users", [ authJwt.verifyToken ], getUsers);
 router.get("/offers", [ authJwt.verifyToken ], getOffers);
@@ -27,4 +28,5 @@ router.get("/ib-clients", [ authJwt.verifyToken ], IBClients);
 router.get("/ib-client-detail", [ authJwt.verifyToken ], IBClientDetail);
 router.post("/update-ib-status", [ authJwt.verifyToken ], updateIBStatus);
 router.get("/own-ib-clients", [ authJwt.verifyToken ], getOwnIBClients);
+router.get("/ib-parent-trading-account-deposits", [ authJwt.verifyToken ], getIBParentTradingAccountDeposits);
 module.exports = router;

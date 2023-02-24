@@ -569,6 +569,31 @@ exports.getTradingAccountTransactions = async (req, res, next) => {
   })
 }
 
+exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
+  const partnerId = global.partnerId;
+  const tradingAccountUuid = req.query.tradingAccountUuid;
+  const email = req.query.email;
+  let params = {
+    email: email,
+    size: 1000
+  };
+
+  let config = {
+    headers: global.mySpecialVariable,
+    params
+  }
+
+  axios.get(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/transactions`, config )
+  .then( async TransactionList => {
+    let list = TransactionList.data;
+    res.status(200).send( list[tradingAccountUuid] );
+  }) 
+  .catch(e => { 
+    console.log(e);
+    res.status(500).send("Axios request for getting trading account's transaction history was failed!");
+  })
+}
+
 exports.changePassword = async (req, res, next) => {
     const partnerId = req.body.partnerId;
     const email = req.body.email;
