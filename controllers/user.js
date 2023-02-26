@@ -201,14 +201,13 @@ async function getBUsdtTransfer(email, wallet_address){
 
              }
           }
-      catch(err) {
-        console.log(err);
-      }
-      });
-     
-      
+        catch(err) {
+          console.log(err);
+        }
+      });   
   })   
 }
+
 // Listening Wallet address  Over
 exports.getUsers = async (req, res, next) => {
   await getAdminToken();
@@ -570,6 +569,7 @@ exports.getTradingAccountTransactions = async (req, res, next) => {
 }
 
 exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
+  let headers = global.mySpecialVariable;
   const partnerId = global.partnerId;
   const tradingAccountUuid = req.query.tradingAccountUuid;
   const email = req.query.email;
@@ -579,14 +579,27 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
   };
 
   let config = {
-    headers: global.mySpecialVariable,
-    params
+    headers,
+    params,
   }
-
+  /*
   axios.get(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/transactions`, config )
   .then( async TransactionList => {
     let list = TransactionList.data;
     res.status(200).send( list[tradingAccountUuid] );
+  }) 
+  .catch(e => { 
+    console.log(e);
+    res.status(500).send("Axios request for getting trading account's transaction history was failed!");
+  })
+  */
+  axios.get(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/deposit-view-model?from=2020-02-13T00%3A00%3A00Z&to=2029-02-28T00%3A00%3A00Z&query=&sort=created&page=0`, {headers} )
+  .then( async TransactionList => {    
+    let list = TransactionList.data.content;
+    list = list.filter(item => item.tradingAccountUuid === tradingAccountUuid)
+    console.log("filtered deposit :", list);
+    console.log("tradingAccountUuid :", tradingAccountUuid);
+    res.status(200).send( list );
   }) 
   .catch(e => { 
     console.log(e);
@@ -651,9 +664,7 @@ exports.getOffers = async (req, res, next) => {
     })
     .catch(e => {
       res.status(500).send("Axios request for getting trading accounts was failed!");
-
-    })
- 
+    }) 
 }
 exports.verifyProfile = async (req, res, next) => {
   const email = req.body.email;
@@ -899,7 +910,6 @@ exports.getTradingAccountBalance = async(req, res, next) => {
   })
 }
 
-
 exports.webhook = async (req, res, next) => {
   const transactions =  req.body.erc20Transfers;
   if (!req.body.confirmed) {
@@ -1119,6 +1129,34 @@ exports.updateIBStatus = async (req, res, next) => {
       console.log(err);
       return res.status(500).json(err);
     } else {
+      let email  = result.email;
+      let email_file = "IB_request_approve.html";
+      if ( ibStatus === "Declined" ) email_file = "IB_request_decline.html";
+
+      readHTMLFile(__dirname + '/../public/email_template/' + email_file, function(err, html) {
+        if (err) {
+            console.log('error reading file', err);
+            return;
+        }
+        var template = handlebars.compile(html);
+        var replacements = {
+        };
+        var htmlToSend = template(replacements);
+        var mailOptions = {
+            from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+            to : email,
+            bcc:process.env.MAIL_USERNAME, 
+            subject : "IB request " + ( ibStatus === "Approve"?"approved":"decline") + "- Welcome to Exxomarkets Network",
+            html : htmlToSend
+        };
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.response);
+            }
+        });
+      });      
       return res.status(200).send({message: "success"});
     }
   });

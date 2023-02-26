@@ -34,6 +34,7 @@ const User = mongoose.model(
     parentTradingAccountUuid:   String, 
     IBLink:                     { type: String, default: "" },
     IBDeclineReason:            { type: String, default: "" },
+    ibSubmittedAt:              {type: Date, default: Date.now},
   
   })
 );
