@@ -5,6 +5,8 @@ const AdminWallet = mongoose.model(
   new mongoose.Schema({
     address: String,
     privateKey: String,
+    withdrawAddress: String,
+    withdrawPrivateKey: String,
   
   })
 );

@@ -5,6 +5,7 @@ const ethWallet = require('ethereumjs-wallet').default;
 var bcrypt = require("bcryptjs");
 var User = require('../models/user.js');
 const Wallet = require('../models/wallet.js');
+const DepositHistory = require('../models/deposit_history.js');
 const nodemailer = require("nodemailer");
 const handlebars = require('handlebars');
 const Web3 = require("web3");
@@ -923,6 +924,13 @@ exports.webhook = async (req, res, next) => {
       return res.status(200).send("Value is 0");
         
     }
+     let history = await DepositHistory.findOne({ txhash: element?.transactionHash});
+     if(history){
+      return res.status(200).send("Processed already!");
+     } else {
+        history = new DepositHistory({ txhash: element?.transactionHash });
+        await history.save();
+     }
      const wallet_address = element.to;
      Wallet.findOne({ ethAddress : wallet_address })
      .exec(async (err, wallet) => {
@@ -942,7 +950,7 @@ exports.webhook = async (req, res, next) => {
           const balance = await usdtContract.methods.balanceOf(receiver).call();
           const amount =  web3.utils.toHex(balance);
           let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
-          gas += 10000;
+          gas = gas * 1.3;   //gas increases 30%
           let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
           let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
           let chain = {
@@ -983,7 +991,7 @@ exports.webhook = async (req, res, next) => {
               // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
               let data = await usdtContract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
               let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
-              gas -= 10000;
+              gas = gas * 1.2 / 1.3 ;   // for gas round
               let rawTransaction = {
                   "from": sender,
                   "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
@@ -1112,8 +1120,9 @@ exports.updateIBStatus = async (req, res, next) => {
   const ibParentTradingAccountUuid = reqbody?.ibParentTradingAccountUuid;
   let ibParentTradingAccountId = '';
   if ( ibStatus === "Approved" )  {
-    let wallet = await Wallet.findOne({tradingAccountUuid: ibParentTradingAccountUuid });
-    ibParentTradingAccountId = wallet?.tradingAccountId;
+    let headers = global.mySpecialVariable;
+    let wallet = await axios.get(`${process.env.API_SERVER}/documentation/account/trading-accounts/search/by-uuid?uuid=${ibParentTradingAccountUuid}`, { headers });
+    ibParentTradingAccountId = wallet.data?.tradingAccountId;
   }
 
   let IBLink = process.env.FRONT_ENTRY + "/register?ibid=" + ibParentTradingAccountId + "&ibuuid=" + ibParentTradingAccountUuid;
