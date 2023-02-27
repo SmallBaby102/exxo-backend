@@ -950,7 +950,7 @@ exports.webhook = async (req, res, next) => {
           const balance = await usdtContract.methods.balanceOf(receiver).call();
           const amount =  web3.utils.toHex(balance);
           let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
-          gas = gas * 1.3;   //gas increases 30%
+          gas = parseInt(gas * 1.3);   //gas increases 30%
           let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
           let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
           let chain = {
@@ -991,7 +991,7 @@ exports.webhook = async (req, res, next) => {
               // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
               let data = await usdtContract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
               let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
-              gas = gas * 1.2 / 1.3 ;   // for gas round
+              gas = parseInt(gas * 1.2 / 1.3) ;   // for gas round
               let rawTransaction = {
                   "from": sender,
                   "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
