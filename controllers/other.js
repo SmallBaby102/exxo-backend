@@ -160,15 +160,21 @@ exports.updateSetting = async (req, res, next) => {
     if (!adminWallet) {
       adminWallet = new AdminWallet({
         address : admin_wallet.address,
-        privateKey : admin_wallet.privateKey
+        privateKey : admin_wallet.privateKey,
+        withdrawAddress: admin_wallet.withdrawAddress,
+        withdrawPrivateKey : admin_wallet.withdrawPrivateKey,
       });
     } else {
       adminWallet.address = admin_wallet.address;
       adminWallet.privateKey = admin_wallet.privateKey;
+      adminWallet.withdrawAddress= admin_wallet.withdrawAddress;
+      adminWallet.withdrawPrivateKey = admin_wallet.withdrawPrivateKey;
     }
     await adminWallet.save();
     global.ADMIN_WALLET_ADDRESS = admin_wallet.address;   
     global.ADMIN_WALLET_PRIVATE_KEY = admin_wallet.privateKey;
+    global.ADMIN_WALLET_WITHDRAW_ADDRESS = admin_wallet.withdrawAddress;
+    global.ADMIN_WALLET_WITHDRAW_PRIVATE_KEY = admin_wallet.withdrawPrivateKey;
 
     let payment = await PaymentMethod.findOne({name: "usdt" });
     if (!payment) {
@@ -233,6 +239,7 @@ exports.updateSetting = async (req, res, next) => {
 
     return res.status(200).send({ message: "success"});
   } catch (error) {
+    console.log(error)
     return res.status(500).send({ message: "error"});
   }
 }
@@ -307,9 +314,9 @@ exports.updateWithdraw = async (req, res, next) => {
         // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
         const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
         const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
-        let sender = global.ADMIN_WALLET_ADDRESS
+        let sender = global.ADMIN_WALLET_WITHDRAW_ADDRESS
         let receiver = withdraw.address;
-        let senderkey = global.ADMIN_WALLET_PRIVATE_KEY;
+        let senderkey = global.ADMIN_WALLET_WITHDRAW_PRIVATE_KEY;
         let amount_hex = web3.utils.toHex(web3.utils.toWei(amount, 'ether'));;
         // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
         let data = await usdtContract.methods.transfer(receiver, amount_hex) //change this value to change amount to send according to decimals
