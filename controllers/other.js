@@ -55,6 +55,7 @@ exports.getWallets = async (req, res, next) => {
 
 exports.getClientWallets = async (req, res, next) => {
   const clientUuid = req.query.accountUuid;
+  /*
   const isDemo = req.query.isDemo;
   try {
     const wallets = await Wallet.find({ clientUuid: clientUuid, isDemo: isDemo });
@@ -62,6 +63,19 @@ exports.getClientWallets = async (req, res, next) => {
   } catch (error) {
     return res.status(500).send({ message: "error" });
   }
+  */
+  let headers = global.mySpecialVariable;
+  const partnerId = global.partnerId;
+  axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/${clientUuid}/trading-accounts/details`, { headers })
+  .then( async tradingAccountsRes => {
+  const clientUuid = req.query.clientUuid;
+    console.log("tradingAccountsRes.data: ", tradingAccountsRes.data);
+    res.status(200).send(tradingAccountsRes.data);
+  }) 
+  .catch(e => { 
+    console.log(e)
+    res.status(500).send("Axios request for getting trading accounts was failed!");
+  }) 
 }
 
 exports.getWithdraw = async (req, res, next) => {
