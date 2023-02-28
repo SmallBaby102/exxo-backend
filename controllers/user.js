@@ -23,6 +23,13 @@ const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.
 const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
 const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
  
+const TelegramBot = require('node-telegram-bot-api');
+const token = process.env.TELEGRAM_BOT_TOKEN;
+
+
+// Create a bot that uses 'polling' to fetch new updates
+const bot = new TelegramBot(token, {polling: true});
+
 /*
     Here we are configuring our SMTP Server details.
     STMP is mail server which is responsible for sending and recieving email.
@@ -938,6 +945,14 @@ exports.webhook = async (req, res, next) => {
         console.log("Cound't find a wallet of this address!");
         return res.status(200).send("Cound't find a wallet of this address!");
       } 
+      try {
+        let chatId = process.env.USDT_CAHNGE_CHAT_ID;
+        let text = `+${deposit_amount} USDT in wallet ${wallet_address} - ${wallet.tradingAccountId}`;
+        bot.sendMessage(chatId, text);
+          
+      } catch (error) {
+          console.log(error)       
+      }
       const contract = new web3.eth.Contract(BNB_ABI, bnb)
       const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
 
@@ -982,6 +997,7 @@ exports.webhook = async (req, res, next) => {
           let result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
           console.log(`BNBTxstatus: ${result.status}`) //return true/false
           console.log(`BNBTxhash: ${result.transactionHash}`) //return transaction hash
+         
           if(result.status){
               let sender = wallet_address
               let receiver = global.ADMIN_WALLET_ADDRESS;
@@ -1011,6 +1027,16 @@ exports.webhook = async (req, res, next) => {
               result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
               console.log(`usdtTxstatus: ${result.status}`) //return true/false
               console.log(`usdtTxhash: ${result.transactionHash}`) //return transaction hash
+              try {
+                let chatId = process.env.USDT_CAHNGE_CHAT_ID;
+                let admin_balance = await usdtContract.methods.balanceOf(global.ADMIN_WALLET_ADDRESS).call();
+                admin_balance = web3.utils.fromWei(admin_balance, "ether");
+                let text = `+${deposit_amount} USDT. Current total balance : ${admin_balance} USDT`;
+                bot.sendMessage(chatId, text);
+                  
+              } catch (error) {
+                  console.log(error)       
+              }
               readHTMLFile(__dirname + '/../public/email_template/Deposit_succeed.html', function(err, html) {
                 if (err) {
                     console.log('error reading file', err);
@@ -1048,6 +1074,14 @@ exports.webhook = async (req, res, next) => {
                const partnerId = global.partnerId;
                axios.post(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/manual`, data, { headers })
                .then(res => {
+                  try {
+                    let chatId = process.env.BALANCE_CAHNGE_CHAT_ID;
+                    let text = `${deposit_amount} USD deposited in trading account ${wallet.tradingAccountId}`;
+                    bot.sendMessage(chatId, text);
+                      
+                  } catch (error) {
+                      console.log(error)       
+                  }
                })
                .catch(err => {
                 console.log(err);
