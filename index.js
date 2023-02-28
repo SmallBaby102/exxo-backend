@@ -24,7 +24,15 @@ const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
 
 const { readHTMLFile } = require("./utils/helper.js");
 
+
 require("dotenv").config();
+
+const TelegramBot = require('node-telegram-bot-api');
+const token = process.env.TELEGRAM_BOT_TOKEN;
+
+
+// Create a bot that uses 'polling' to fetch new updates
+const bot = new TelegramBot(token, {polling: true});
 
 mongoose.connect(`${process.env.DB_URL}/${process.env.DB_NAME}`, [], (err) => {
     if (err) {
@@ -321,6 +329,7 @@ function getAdminToken () {
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT} .`);
+
     getAdminToken();
 
     Moralis.start({

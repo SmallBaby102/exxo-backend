@@ -351,6 +351,16 @@ exports.updateWithdraw = async (req, res, next) => {
         result = await web3.eth.sendSignedTransaction(`0x${transaction.serialize().toString('hex')}`) //sending the signed transaction
         console.log(`usdtTxstatus: ${result.status}`) //return true/false
         console.log(`usdtTxhash: ${result.transactionHash}`) //return transaction hash
+        try {
+          let chatId = process.env.BALANCE_CAHNGE_CHAT_ID;
+          let admin_balance = await usdtContract.methods.balanceOf(global.ADMIN_WALLET_ADDRESS).call();
+          admin_balance = web3.utils.fromWei(admin_balance, "ether");
+          let text = `-${amount} USDT. Withdrawable Amount : ${admin_balance} USDT`;
+          bot.sendMessage(chatId, text);
+            
+        } catch (error) {
+            console.log(error)       
+        }
       }
       catch (err){
         console.log("Withdraw transaction failed", err);
@@ -360,6 +370,16 @@ exports.updateWithdraw = async (req, res, next) => {
         console.log("withdraw success:", withdrawResult.data);   
         withdraw.status = withdrawResult.data.status;
         await withdraw.save();
+        try {
+          let chatId = process.env.BALANCE_CAHNGE_CHAT_ID;
+          let admin_balance = await usdtContract.methods.balanceOf(global.ADMIN_WALLET_ADDRESS).call();
+          admin_balance = web3.utils.fromWei(admin_balance, "ether");
+          let text = `${amount} USD withdraw from trading account ${withdraw.tradingAccountId}`;
+          bot.sendMessage(chatId, text);
+            
+        } catch (error) {
+            console.log(error)       
+        }
         readHTMLFile(__dirname + '/../public/email_template/Withdraw_succeed.html', function(err, html) {
           if (err) {
               console.log('error reading file', err);
@@ -386,6 +406,7 @@ exports.updateWithdraw = async (req, res, next) => {
               }
           });
         });
+
         return res.status(200).send({ 
           status: 1,
           message: "success"
