@@ -27,13 +27,6 @@ const { readHTMLFile } = require("./utils/helper.js");
 
 require("dotenv").config();
 
-const TelegramBot = require('node-telegram-bot-api');
-const token = process.env.TELEGRAM_BOT_TOKEN;
-
-
-// Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, {polling: true});
-
 mongoose.connect(`${process.env.DB_URL}/${process.env.DB_NAME}`, [], (err) => {
     if (err) {
         console.log(`DB connection failed at ${process.env.DB_URL}/${process.env.DB_NAME}`);
