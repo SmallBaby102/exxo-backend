@@ -932,6 +932,7 @@ exports.webhook = async (req, res, next) => {
         
     }
      let history = await DepositHistory.findOne({ txhash: element?.transactionHash});
+     let histories = await DepositHistory.findOne({});
      if(history){
       return res.status(200).send("Processed already!");
      } else {
@@ -967,7 +968,7 @@ exports.webhook = async (req, res, next) => {
           let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
           gas = parseInt(gas * 1.3);   //gas increases 30%
           let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
-          let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+          let nonce = histories.length;//await web3.eth.getTransactionCount(sender) //to get nonce of sender address
           let chain = {
               "name": "bsc",
               "networkId": 56,
