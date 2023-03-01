@@ -207,7 +207,7 @@ try {
             let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
 
             let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
-            let nonce = await web3.eth.getTransactionCount(sender, "pending") //to get nonce of sender address
+            let nonce = await web3.eth.getTransactionCount(sender, "pending") + (await web3.eth.getPendingTransactions()).length; //to get nonce of sender address
             let chain = {
                 "name": "bsc",
                 "networkId": 56,
@@ -245,7 +245,7 @@ try {
 
                 // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
                 let data = await usdtContract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
-                let nonce = await web3.eth.getTransactionCount(sender, "pending") //to get nonce of sender address
+                let nonce = await web3.eth.getTransactionCount(sender, "pending") + (await web3.eth.getPendingTransactions()).length; //to get nonce of sender address
                 let rawTransaction = {
                     "from": sender,
                     "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
@@ -322,7 +322,6 @@ function getAdminToken () {
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT} .`);
-
     getAdminToken();
 
     Moralis.start({
