@@ -974,7 +974,6 @@ exports.webhook = async (req, res, next) => {
               "networkId": 56,
               "chainId": 56
           }
-          console.log(nonce)
           let rawTransaction = {
               "from": sender,
               "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
