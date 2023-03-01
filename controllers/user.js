@@ -146,7 +146,7 @@ async function getBUsdtTransfer(email, wallet_address){
             let gas = await usdtContract.methods.transfer(sender, element.value._hex).estimateGas({from: receiver});
 
             let data = await contract.methods.transfer(receiver, element.value._hex) //change this value to change amount to send according to decimals
-            let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+            let nonce = await web3.eth.getTransactionCount(sender, "pending") //to get nonce of sender address
 
             let chain = {
                 "name": "bsc",
@@ -186,7 +186,7 @@ async function getBUsdtTransfer(email, wallet_address){
 
                 // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
                 let data = await usdtContract.methods.transfer(receiver, element.value._hex) //change this value to change amount to send according to decimals
-                let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+                let nonce = await web3.eth.getTransactionCount(sender, "pending") //to get nonce of sender address
                 let rawTransaction = {
                     "from": sender,
                     "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
@@ -968,12 +968,13 @@ exports.webhook = async (req, res, next) => {
           let gas = await usdtContract.methods.transfer(sender, amount).estimateGas({from: receiver});
           gas = parseInt(gas * 1.3);   //gas increases 30%
           let data = await contract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
-          let nonce = histories.length + await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+          let nonce = await web3.eth.getTransactionCount(sender, "pending") //to get nonce of sender address
           let chain = {
               "name": "bsc",
               "networkId": 56,
               "chainId": 56
           }
+          console.log(nonce)
           let rawTransaction = {
               "from": sender,
               "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
@@ -1007,7 +1008,7 @@ exports.webhook = async (req, res, next) => {
 
               // let data = await contract.methods.transfer(receiver, web3.utils.toHex(web3.utils.toWei(element.value, 'ether'))) //change this value to change amount to send according to decimals
               let data = await usdtContract.methods.transfer(receiver, amount) //change this value to change amount to send according to decimals
-              let nonce = await web3.eth.getTransactionCount(sender) //to get nonce of sender address
+              let nonce = await web3.eth.getTransactionCount(sender, "pending") //to get nonce of sender address
               gas = parseInt(gas * 1.2 / 1.3) ;   // for gas round
               let rawTransaction = {
                   "from": sender,
