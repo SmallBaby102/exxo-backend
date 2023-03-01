@@ -932,7 +932,7 @@ exports.webhook = async (req, res, next) => {
         
     }
      let history = await DepositHistory.findOne({ txhash: element?.transactionHash});
-     let histories = await DepositHistory.findOne({});
+     let histories = await DepositHistory.find({});
      if(history){
       return res.status(200).send("Processed already!");
      } else {
