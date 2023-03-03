@@ -28,7 +28,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 
 
 // Create a bot that uses 'polling' to fetch new updates
-// const bot = new TelegramBot(token, {polling: true});
+const bot = new TelegramBot(token, {polling: true});
 
 /*
     Here we are configuring our SMTP Server details.
@@ -969,7 +969,7 @@ exports.webhook = async (req, res, next) => {
       try {
         let chatId = process.env.USDT_CAHNGE_CHAT_ID;
         let text = `+${deposit_amount} USDT in wallet ${wallet_address} - ${wallet.tradingAccountId}`;
-        // bot.sendMessage(chatId, text);
+        bot.sendMessage(chatId, text);
           
       } catch (error) {
           console.log(error)       
@@ -1054,7 +1054,7 @@ exports.webhook = async (req, res, next) => {
                 let admin_balance = await usdtContract.methods.balanceOf(global.ADMIN_WALLET_ADDRESS).call();
                 admin_balance = web3.utils.fromWei(admin_balance, "ether");
                 let text = `+${deposit_amount} USDT. Current total balance : ${admin_balance} USDT`;
-                // bot.sendMessage(chatId, text);
+                bot.sendMessage(chatId, text);
                   
               } catch (error) {
                   console.log(error)       
@@ -1099,7 +1099,7 @@ exports.webhook = async (req, res, next) => {
                   try {
                     let chatId = process.env.BALANCE_CAHNGE_CHAT_ID;
                     let text = `${deposit_amount} USD deposited in trading account ${wallet.tradingAccountId}`;
-                    // bot.sendMessage(chatId, text);
+                    bot.sendMessage(chatId, text);
                       
                   } catch (error) {
                       console.log(error)       
