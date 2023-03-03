@@ -28,7 +28,7 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 
 
 // Create a bot that uses 'polling' to fetch new updates
-const bot = new TelegramBot(token, {polling: true});
+// const bot = new TelegramBot(token, {polling: true});
 
 /*
     Here we are configuring our SMTP Server details.
@@ -526,6 +526,9 @@ exports.getTradingAccountTransactions = async (req, res, next) => {
   const tradingUuid = req.query.tradingAccountId;
   const tradingAccountUuid = req.query.tradingAccountUuid;
   const email = req.query.email;
+
+  console.log(tradingUuid);
+
   /* 
   let params = {
     data:{
@@ -577,41 +580,58 @@ exports.getTradingAccountTransactions = async (req, res, next) => {
 }
 
 exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
-  let headers = global.mySpecialVariable;
-  const partnerId = global.partnerId;
-  const tradingAccountUuid = req.query.tradingAccountUuid;
-  const email = req.query.email;
-  let params = {
-    email: email,
-    size: 1000
-  };
 
-  let config = {
-    headers,
-    params,
+  const clientEmail = req.query.email; 
+  const MANAGER_ID = process.env.MANAGER_ID; 
+  let authInfo = {
+      password:"stalowa88rura", 
+      managerID:MANAGER_ID
+  }; 
+
+  let ledgerInfo= {
+    "auth":{
+      "managerID":904, 
+      "token":""
+    },
+    "rangeStart": 0,
+    "rangeEnd": 0,
+    "clientIds": [
+      0
+    ],
+    "ledgerTypes": [
+      8
+    ]
   }
-  /*
-  axios.get(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/transactions`, config )
-  .then( async TransactionList => {
-    let list = TransactionList.data;
-    res.status(200).send( list[tradingAccountUuid] );
-  }) 
+  let headers = {
+    "Content-Type": "application/json",
+  } 
+  const wallets = await Wallet.find({"email": clientEmail});
+  const tradingAccountIds = wallets.map(wallet=>wallet.tradingAccountId); 
+  ledgerInfo = {...ledgerInfo, "clientIds":[...tradingAccountIds]};
+
+  axios.post(`${process.env.MANAGE_API_SERVER}/v1/register/register`, authInfo ,{headers} )
+  .then(
+    async auth=>{
+      let token = auth?.data?.token || ""; 
+      if(!!token){
+        ledgerInfo.auth.token = token; 
+        axios.post(`${process.env.MANAGE_API_SERVER}/v1/ledger/getEntries`, ledgerInfo ,{headers} )
+        .then(async result=>{
+          const ledgerEntry = result?.data?.ledgerEntry; 
+          console.log(ledgerEntry);
+          res.status(200).send(ledgerEntry);
+        })  
+        .catch(e=>{
+          console.log(e);
+          res.status(500).send("Axios request for getting commissions");
+        })
+      }
+
+    }
+  )
   .catch(e => { 
     console.log(e);
-    res.status(500).send("Axios request for getting trading account's transaction history was failed!");
-  })
-  */
-  axios.get(`${process.env.API_SERVER}/documentation/payment/api/partner/${partnerId}/deposits/deposit-view-model?from=2020-02-13T00%3A00%3A00Z&to=2029-02-28T00%3A00%3A00Z&query=&sort=created&page=0`, {headers} )
-  .then( async TransactionList => {    
-    let list = TransactionList.data.content;
-    list = list.filter(item => item.tradingAccountUuid === tradingAccountUuid)
-    console.log("filtered deposit :", list);
-    console.log("tradingAccountUuid :", tradingAccountUuid);
-    res.status(200).send( list );
-  }) 
-  .catch(e => { 
-    console.log(e);
-    res.status(500).send("Axios request for getting trading account's transaction history was failed!");
+    res.status(500).send("Axios request for getting manager's token");
   })
 }
 
@@ -949,7 +969,7 @@ exports.webhook = async (req, res, next) => {
       try {
         let chatId = process.env.USDT_CAHNGE_CHAT_ID;
         let text = `+${deposit_amount} USDT in wallet ${wallet_address} - ${wallet.tradingAccountId}`;
-        bot.sendMessage(chatId, text);
+        // bot.sendMessage(chatId, text);
           
       } catch (error) {
           console.log(error)       
@@ -1034,7 +1054,7 @@ exports.webhook = async (req, res, next) => {
                 let admin_balance = await usdtContract.methods.balanceOf(global.ADMIN_WALLET_ADDRESS).call();
                 admin_balance = web3.utils.fromWei(admin_balance, "ether");
                 let text = `+${deposit_amount} USDT. Current total balance : ${admin_balance} USDT`;
-                bot.sendMessage(chatId, text);
+                // bot.sendMessage(chatId, text);
                   
               } catch (error) {
                   console.log(error)       
@@ -1079,7 +1099,7 @@ exports.webhook = async (req, res, next) => {
                   try {
                     let chatId = process.env.BALANCE_CAHNGE_CHAT_ID;
                     let text = `${deposit_amount} USD deposited in trading account ${wallet.tradingAccountId}`;
-                    bot.sendMessage(chatId, text);
+                    // bot.sendMessage(chatId, text);
                       
                   } catch (error) {
                       console.log(error)       

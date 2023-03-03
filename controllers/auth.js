@@ -179,6 +179,7 @@ exports.verifyEmail = async (req, res) => {
   } 
   axios.post(`${process.env.API_SERVER}/proxy/auth/oauth/token`, auth, { headers })
   .then(result => {
+      console.log(result);
       headers = {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${result.data.access_token}`,
@@ -208,6 +209,7 @@ exports.verifyEmail = async (req, res) => {
 
       console.log("((((((((((((BO signup & verifyEmail))))))))))))", data);
 
+      // axios.post(`${process.env.MANAGE_API_SERVER}/documentation/process/api/accounts/sync`, data, { headers } )
       axios.post(`${process.env.API_SERVER}/documentation/process/api/accounts/sync`, data, { headers } )
       .then(async accountRes => {
         user.accountUuid = accountRes.data.accountUuid;
