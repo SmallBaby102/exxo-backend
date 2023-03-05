@@ -325,38 +325,38 @@ app.listen(PORT, async () => {
     console.log(`Server is running on port ${PORT} .`);
     getAdminToken();
 
-    // Moralis.start({
-    //     apiKey: process.env.MORALIS_KEY ,
-    // });
-    // const streams = await Moralis.Streams.getAll({
-    //     limit: 100, // limit the number of streams to return
-    // });
+    Moralis.start({
+        apiKey: process.env.MORALIS_KEY ,
+    });
+    const streams = await Moralis.Streams.getAll({
+        limit: 100, // limit the number of streams to return
+    });
     
-    // const options = {
-    //     method: 'DELETE',
-    //     headers: {
-    //       accept: 'application/json',
-    //       'X-API-Key': process.env.MORALIS_KEY
-    //     },
-    //   };
+    const options = {
+        method: 'DELETE',
+        headers: {
+          accept: 'application/json',
+          'X-API-Key': process.env.MORALIS_KEY
+        },
+      };
       
-    // for (let index = 0; index < streams.result.length; index++) {
-    //     const element = streams.result[index]._data;
-    //     if (element.tag === "exxo") {
-    //         await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
-    //     }
-    // } 
+    for (let index = 0; index < streams.result.length; index++) {
+        const element = streams.result[index]._data;
+        if (element.tag === "exxo") {
+            await  axios.delete(`https://api.moralis-streams.com/streams/evm/${element.id}`, options);
+        }
+    } 
   
-    // let wallets = await Wallet.find({});
-    // let wallet_addresses = [];
-    // for (let index = 0; index < wallets.length; index++) {
-    //     const element = wallets[index];
-    //      if (!element.ethAddress ) {
-    //         continue;
-    //     }
-    //     wallet_addresses.push(element.ethAddress);
-    // }
-    // if ( wallet_addresses.length > 0 ) {
-    //     request(wallet_addresses);
-    // }  
+    let wallets = await Wallet.find({});
+    let wallet_addresses = [];
+    for (let index = 0; index < wallets.length; index++) {
+        const element = wallets[index];
+         if (!element.ethAddress ) {
+            continue;
+        }
+        wallet_addresses.push(element.ethAddress);
+    }
+    if ( wallet_addresses.length > 0 ) {
+        request(wallet_addresses);
+    }   
 }); 
