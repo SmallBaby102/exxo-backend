@@ -1188,7 +1188,7 @@ exports.updateIBStatus = async (req, res, next) => {
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : email,
             bcc:process.env.MAIL_USERNAME, 
-            subject : "IB request " + ( ibStatus === "Approve"?"approved":"decline") + "- Welcome to Exxomarkets Network",
+            subject : "IB request " + ( ibStatus === "Approved"?"approved":"decline") + "- Welcome to Exxomarkets Network",
             html : htmlToSend
         };
         smtpTransport.sendMail(mailOptions, function(error, response){
