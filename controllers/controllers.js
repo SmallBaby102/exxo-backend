@@ -83,7 +83,5 @@ exports.buy = async (req, res, next) => {
  } catch (error) {
   console.log("puppeteer error:", error)
   return res.status(500).send({message : "error"});
-  
  }
- 
 };

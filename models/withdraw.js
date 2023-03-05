@@ -7,7 +7,7 @@ const Withdraw = mongoose.model(
     amount:             String,
     address:            String,
     currency:           String,
-    tradingAccountId:   String,
+    tradingAccountId:   String, 
     tradingAccountUuid: String,
     remark:             String,
     method:             {type: String, default: "" }, 

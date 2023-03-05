@@ -49,29 +49,6 @@ async function getBUsdtTransfer(email, wallet_address){
   const provider = new ethers.providers.WebSocketProvider(
       `wss://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/`
   ); 
-  // List all token transfers  *to*  myAddress:
-  // const filter = {
-  //     address: busdt,
-  //     topics: [
-  //         ethers.utils.id("Transfer(address,address,uint256)"),
-  //         null,
-  //         [
-  //             ethers.utils.hexZeroPad(wallet_addresses[0], 32),
-  //             // ethers.utils.id(wallet_addresses[0], 32),
-  //         ]
-  //     ]
-  // };
-  // provider.on(filter, async (log) => {
-  //     console.log("TX log:", log);
-  //     web3.eth.getTransaction(log.transactionHash, async function (error, transactionDetail) {
-  //         console.log("trans-detail", transactionDetail);
-  //         // if(parseFloat(transactionDetail.value) < 0.000105 ){
-  //         //     return;
-  //         // }
-         
-  //     });
-  //     // Emitted whenever a DAI token transfer occurs
-  // })
   const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
   const myfilter = contract.filters.Transfer(null, wallet_address)
   contract.on(myfilter, async (from, to, value, event)=>{
@@ -443,7 +420,7 @@ exports.createWalletOfAllTradingAccounts = async (req, res, next) => {
   try {
       while(true){
         const accounts = await axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/accounts/view?from=${from}&to=${to}&size=1000&page=${page}&query=`, { headers } )
-        for (let index = 0; index < accounts.data.content?.length; index++) {
+      for (let index = 0; index < accounts.data.content?.length; index++) {
         const element = accounts.data.content[index];
         const data = {
           "offerUuid": req.body.offerUuid,
