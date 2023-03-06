@@ -547,7 +547,7 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
     "rangeStart": 1667302505000,
     "rangeEnd": 1678101053000,
     "clientIds": [
-      231231
+      
     ],
     "ledgerTypes": [
       0,1,2,3,4,5,6,8
@@ -559,13 +559,14 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
   const wallets = await Wallet.find({"email": clientEmail});
   const tradingAccountIds = wallets.map(wallet=>wallet.tradingAccountId); 
   ledgerInfo = {...ledgerInfo, "clientIds":[...tradingAccountIds]};
-
+  console.log(tradingAccountIds);
   axios.post(`${process.env.MANAGE_API_SERVER}/v1/register/register`, authInfo ,{headers} )
   .then(
     async auth=>{
       let token = auth?.data?.token || ""; 
       if(!!token){
         ledgerInfo.auth.token = token; 
+        console.log(ledgerInfo);
         axios.post(`${process.env.MANAGE_API_SERVER}/v1/ledger/getEntries`, ledgerInfo ,{headers} )
         .then(async result=>{
           const ledgerEntry = result?.data?.ledgerEntry; 
