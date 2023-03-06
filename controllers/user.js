@@ -578,7 +578,7 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
       231231
     ],
     "ledgerTypes": [
-      8
+      0,1,2,3,4,5,6,8
     ]
   }
   let headers = {
