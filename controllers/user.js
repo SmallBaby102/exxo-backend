@@ -507,34 +507,6 @@ exports.getTradingAccountTransactions = async (req, res, next) => {
 
   console.log(tradingUuid);
 
-  /* 
-  let params = {
-    data:{
-      "types": [
-        "DEPOSIT"
-      ],
-      "from": "2020-02-01T15:10:49.710Z",
-      "to": "2023-02-17T15:10:49.710Z",
-      "limit": 1000
-    }
-  };
-
-  let config = {
-    headers: global.mySpecialVariable,
-    params
-  }
-
-  axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${tradingUuid}/ledgers`, config )
-  .then( async TransactionList => {
-      console.log("TransactionList", TransactionList.data);
-      res.status(200).send( TransactionList );
-  }) 
-  .catch(e => { 
-    console.log(e);
-    console.log("*************", config );
-    res.status(500).send("Axios request for getting trading account's transaction history was failed!");
-  }) 
-  */
   let params = {
     email: email,
     size: 1000
@@ -563,10 +535,10 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
   const MANAGER_ID = process.env.MANAGER_ID; 
   let authInfo = {
       password:"stalowa88rura", 
-      managerID:MANAGER_ID
+      managerID: 904
   }; 
-  const Date = new Date();
-  let time = Date.getTime();
+  const date_ = new Date();
+  let time = date_.getTime();
   let ledgerInfo= {
     "auth":{
       "managerID":904, 
