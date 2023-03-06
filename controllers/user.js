@@ -572,8 +572,8 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
       "managerID":904, 
       "token":""
     },
-    "rangeStart": 0,
-    "rangeEnd": time,
+    "rangeStart": 1667302505000,
+    "rangeEnd": 1678101053000,
     "clientIds": [
       231231
     ],
