@@ -1221,11 +1221,14 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
     tradingAccountForScoial:  socialAccountInfo.tradingAccountForScoial, 
     incentiveFeePercentage:   socialAccountInfo.incentiveFeePercentage, 
     sStatus:                  sStatus
-  }).then(result=>{
-    return res.status(200).send("Sent the Application Successfully");
-  }).catch(e=>{
-    return res.status(500).send("Server Error");
-  });
+  }, function(err, result){
+      if(err){
+        return res.status(500).send("Server Error:" , err);
+      }
+
+      return res.status(200).send("Application Succeed:", result);
+
+  })
 }
 exports.updateSocialAccountStatus= async (req, res, next) =>{
   const sStatus=  req.query?.sStatus;
