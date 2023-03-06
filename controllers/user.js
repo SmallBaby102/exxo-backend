@@ -1272,7 +1272,7 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
   });
 }
 
-exports.getSocialTradingAccountInfo = (req, res, next)=>{
+exports.getSocialTradingAccountInfo = async (req, res, next)=>{
   const email = req.query.email; 
   const accountUuid = req.query.accountUuid; 
   SocialAccount.findOne({email:email, accountUuid:accountUuid}, function(err, result){
@@ -1281,10 +1281,12 @@ exports.getSocialTradingAccountInfo = (req, res, next)=>{
     }
     return res.status(200).send({socialAccountInfo: result}); 
   })
+  console.log("social-account-infoo request:");
+  
 }
 
 
-exports.getSocialTradingAccountInfoAll = (req, res, next)=>{
+exports.getSocialTradingAccountInfoAll = async (req, res, next)=>{
   const email = req.query.email; 
   const accountUuid = req.query.accountUuid; 
   SocialAccount.find({}, function(err, result){

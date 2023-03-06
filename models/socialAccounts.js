@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { NUMBER } = require("sequelize");
 const SocialAccount = mongoose.model(
-  "Social Account",
+  "SocialAccount",
   new mongoose.Schema({
     accountUuid:                String,
     email:                      String,
