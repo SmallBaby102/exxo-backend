@@ -575,7 +575,7 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
     "rangeStart": 0,
     "rangeEnd": time,
     "clientIds": [
-      0
+      231231
     ],
     "ledgerTypes": [
       8
