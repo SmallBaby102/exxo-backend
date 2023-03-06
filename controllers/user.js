@@ -14,6 +14,7 @@ const Common = require('ethereumjs-common');
 const Tx = require('ethereumjs-tx')
 const Moralis = require("moralis").default;
 const Chains = require("@moralisweb3/common-evm-utils");
+const SocialAccount = require("../models/socialAccounts");
 
 const { readHTMLFile } = require("../utils/helper.js");
 const BUSDT_ABI = require("../abi/busdt_abi.json");
@@ -564,14 +565,15 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
       password:"stalowa88rura", 
       managerID:MANAGER_ID
   }; 
-
+  const Date = new Date();
+  let time = Date.getTime();
   let ledgerInfo= {
     "auth":{
       "managerID":904, 
       "token":""
     },
     "rangeStart": 0,
-    "rangeEnd": 0,
+    "rangeEnd": time,
     "clientIds": [
       0
     ],
@@ -1227,5 +1229,93 @@ exports.IBClientDetail = async (req, res, next) => {
       return res.status(200).send(result);
     }
   }); 
+}
+
+exports.registerSocialTradingFeed= async (req, res, next)=>{
+  const accountUuid= req.query.accountUuid; 
+  const email= req.query.email; 
+  const socialAccountInfo = req.query.socialAccountInfo; 
+
+  const sStatus = "Pending"; 
+  SocialAccount.save({
+    email: email, 
+    accountUuid:      accountUuid, 
+    hasWebsite:       socialAccountInfo.hasWebsite,
+    hasClientBase:    socialAccountInfo.hasClientBase,
+    shareTradingPerformance:  socialAccountInfo.shareTradingPerformance,
+    promoteContent:           socialAccountInfo.promoteContent,
+    tradingInstruments:       socialAccountInfo.tradingInstruments, 
+    tradingAccountForScoial:  socialAccountInfo.tradingAccountForScoial, 
+    incentiveFeePercentage:   socialAccountInfo.incentiveFeePercentage, 
+    sStatus:                  sStatus
+  }).then(result=>{
+    return res.status(200).send("Sent the Application Successfully");
+  }).catch(e=>{
+    return res.status(500).send("Server Error");
+  });
+}
+exports.updateSocialAccountStatus= async (req, res, next) =>{
+  const sStatus=  req.query?.sStatus;
+  const accountUuid = req.query?.accountUuid; 
+  const email = req.query?.email; 
+  SocialAccount.findOneAndUpdate({email: email, accountUuid: accountUuid}, {sStatus: sStatus},function(err, result) {
+    if (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    } else {
+      let email  = result.email;
+      let email_file = "Social_account_approve.html";
+      if ( sStatus === "Declined" ) email_file = "Social_account_decine.html";
+
+      readHTMLFile(__dirname + '/../public/email_template/' + email_file, function(err, html) {
+        if (err) {
+            console.log('error reading file', err);
+            return;
+        }
+        var template = handlebars.compile(html);
+        var replacements = {
+        };
+        var htmlToSend = template(replacements);
+        var mailOptions = {
+            from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
+            to : email,
+            bcc:process.env.MAIL_USERNAME, 
+            subject : "Social trading account application " + ( ibStatus === "Approved"?"approved":"decline") ,
+            html : htmlToSend
+        };
+        smtpTransport.sendMail(mailOptions, function(error, response){
+            if(error){
+                console.log(error);
+            }else{
+                console.log("Message sent: " + response.response);
+            }
+        });
+      });      
+      return res.status(200).send({message: "success"});
+    }
+  });
+}
+
+exports.getSocialTradingAccountInfo = (req, res, next)=>{
+  const email = req.query.email; 
+  const accountUuid = req.query.accountUuid; 
+  SocialAccount.findOne({email:email, accountUuid:accountUuid}, function(err, result){
+    if(err){
+      return res.status(500).send("Server Error:", err);
+    }
+    return res.status(200).send({socialAccountInfo: result}); 
+  })
+}
+
+
+exports.getSocialTradingAccountInfoAll = (req, res, next)=>{
+  const email = req.query.email; 
+  const accountUuid = req.query.accountUuid; 
+  SocialAccount.find({}, function(err, result){
+    if(err){
+      return res.status(500).send("Server Error:", err);
+    }
+    return res.status(200).send({socialAccountInfos: result}); 
+  })
 }
 
