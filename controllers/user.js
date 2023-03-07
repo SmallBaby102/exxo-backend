@@ -1211,7 +1211,7 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
   console.log("social account info:" , socialAccountInfo);
   const sStatus = "Pending"; 
 
-  
+
 
   let socialAccount = new SocialAccount({
     email: email, 
@@ -1227,7 +1227,7 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
   });
   socialAccount.save(function(err, result){
       if(err){
-        return res.status(500).send("Server Error:" , err);
+        return res.status(500).send(err);
       }
       return res.status(200).send(result);
   })
