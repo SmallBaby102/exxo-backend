@@ -1208,27 +1208,25 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
   const accountUuid= req.query.accountUuid; 
   const email= req.query.email; 
   const socialAccountInfo = req.query.socialAccountInfo; 
-
+  console.log("social account info:" , socialAccountInfo);
   const sStatus = "Pending"; 
   let socialAccount = new SocialAccount({
     email: email, 
     accountUuid:      accountUuid, 
-    hasWebsite:       socialAccountInfo.hasWebsite || false,
-    hasClientBase:    socialAccountInfo.hasClientBase || false,
-    shareTradingPerformance:  socialAccountInfo.shareTradingPerformance || false,
-    promoteContent:           socialAccountInfo.promoteContent,
-    tradingInstruments:       socialAccountInfo.tradingInstruments, 
-    tradingAccountForScoial:  socialAccountInfo.tradingAccountForScoial, 
-    incentiveFeePercentage:   socialAccountInfo.incentiveFeePercentage, 
+    hasWebsite:       socialAccountInfo?.hasWebsite || false,
+    hasClientBase:    socialAccountInfo?.hasClientBase || false,
+    shareTradingPerformance:  socialAccountInfo?.shareTradingPerformance || false,
+    promoteContent:           socialAccountInfo?.promoteContent,
+    tradingInstruments:       socialAccountInfo?.tradingInstruments, 
+    tradingAccountForScoial:  socialAccountInfo?.tradingAccountForScoial, 
+    incentiveFeePercentage:   socialAccountInfo?.incentiveFeePercentage, 
     sStatus:                  sStatus
   });
   socialAccount.save(function(err, result){
       if(err){
         return res.status(500).send("Server Error:" , err);
       }
-
       return res.status(200).send("Application Succeed:", result);
-
   })
 }
 exports.updateSocialAccountStatus= async (req, res, next) =>{
