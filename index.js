@@ -17,7 +17,7 @@ const Web3 = require("web3");
 const axios = require('axios');
 const Common = require('ethereumjs-common');
 const Tx = require('ethereumjs-tx');
-const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
+const web3 = new Web3(new Web3.providers.HttpProvider("wss://bsc.getblock.io/d7f32d05-c742-4801-b6a6-27d02111f17e/mainnet/"))
 // token address
 const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
 const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
@@ -125,7 +125,7 @@ async function request(wallet_addresses) {
 async function getBUsdtTransfer(email, wallet_address){
 try {  
     const provider = new ethers.providers.WebSocketProvider(
-        `wss://bsc.getblock.io/5242089a-741c-4c54-95f7-d2f53c09faac/mainnet/`
+        `wss://bsc.getblock.io/d7f32d05-c742-4801-b6a6-27d02111f17e/mainnet/`
     ); 
     const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
     const myfilter = contract.filters.Transfer(null, wallet_address)
