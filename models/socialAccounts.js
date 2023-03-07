@@ -3,8 +3,8 @@ const { NUMBER } = require("sequelize");
 const SocialAccount = mongoose.model(
   "SocialAccount",
   new mongoose.Schema({
-    accountUuid:                String,
     email:                      String,
+    accountUuid:                {type: String, unique:true,required: true},
     hasWebsite:                 Boolean,
     hasClientBase:              Boolean,
     shareTradingPerformance:    Boolean,

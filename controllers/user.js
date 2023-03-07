@@ -1205,12 +1205,14 @@ exports.IBClientDetail = async (req, res, next) => {
 }
 
 exports.registerSocialTradingFeed= async (req, res, next)=>{
-  const accountUuid= req.query.accountUuid; 
-  const email= req.query.email; 
-  console.log("req.query", req);
-  const socialAccountInfo = req.query.socialAccountInfo; 
+  const accountUuid= req.body.params.accountUuid; 
+  const email= req.body.params.email; 
+  const socialAccountInfo = req.body.params.socialAccountInfo; 
   console.log("social account info:" , socialAccountInfo);
   const sStatus = "Pending"; 
+
+  
+
   let socialAccount = new SocialAccount({
     email: email, 
     accountUuid:      accountUuid, 
