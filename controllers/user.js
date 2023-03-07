@@ -1211,8 +1211,11 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
   console.log("social account info:" , socialAccountInfo);
   const sStatus = "Pending"; 
 
-
-
+  let _socialAccountInfo =await SocialAccount.findOne({accountUuid: accountUuid}); 
+  if(_socialAccountInfo){
+    return res.status(501).send({errType:"Wrong Application", errorMessage:"This user already applied the social trading Account"});
+  }
+  
   let socialAccount = new SocialAccount({
     email: email, 
     accountUuid:      accountUuid, 
