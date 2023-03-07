@@ -560,7 +560,7 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
   const ibParentTradingAccountId = user.ibParentTradingAccountId; 
 
   if(!ibParentTradingAccountId){
-    return res.status(200).send([ibParentTradingAccountId]);
+    return res.status(200).send([user]);
   }
 
   ledgerInfo = {...ledgerInfo, "clientIds":[ibParentTradingAccountId]};
