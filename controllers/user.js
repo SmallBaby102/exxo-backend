@@ -1239,6 +1239,11 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
       console.log(err);
       return res.status(500).json(err);
     } else {
+
+      if(result === null)
+      {
+        return res.sStatus(200).send("Account doesn't exist");
+      }
       let email  = result.email;
       let email_file = "Social_account_approve.html";
       if ( sStatus === "Declined" ) email_file = "Social_account_decine.html";
