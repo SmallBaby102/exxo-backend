@@ -556,7 +556,7 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
   let headers = {
     "Content-Type": "application/json",
   } 
-  const user = await User.find({"email": clientEmail});
+  const user = await User.findOne({"email": clientEmail});
   const ibParentTradingAccountId = user.ibParentTradingAccountId; 
 
   if(!ibParentTradingAccountId){
