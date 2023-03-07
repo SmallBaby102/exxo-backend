@@ -550,16 +550,21 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
       
     ],
     "ledgerTypes": [
-      0,1,2,3,4,5,6,8
+      4
     ]
   }
   let headers = {
     "Content-Type": "application/json",
   } 
-  const wallets = await Wallet.find({"email": clientEmail});
-  const tradingAccountIds = wallets.map(wallet=>wallet.tradingAccountId); 
-  ledgerInfo = {...ledgerInfo, "clientIds":[...tradingAccountIds]};
-  console.log(tradingAccountIds);
+  const user = await User.find({"email": clientEmail});
+  const ibParentTradingAccountId = user.ibParentTradingAccountId; 
+
+  if(!ibParentTradingAccountIds){
+    return res.status(200).send([]);
+  }
+
+  ledgerInfo = {...ledgerInfo, "clientIds":[ibParentTradingAccountId]};
+
   axios.post(`${process.env.MANAGE_API_SERVER}/v1/register/register`, authInfo ,{headers} )
   .then(
     async auth=>{
@@ -1296,15 +1301,12 @@ exports.getSocialTradingAccountInfo = async (req, res, next)=>{
    
 }
 
-
 exports.getSocialTradingAccountInfoAll = async (req, res, next)=>{
-  const email = req.query.email; 
-  const accountUuid = req.query.accountUuid; 
   SocialAccount.find({}, function(err, result){
     if(err){
-      return res.status(500).send("Server Error:", err);
+      return res.status(500).send(err);
     }
-    return res.status(200).send({socialAccountInfos: result}); 
+    return res.status(200).send(result); 
   })
 }
 
