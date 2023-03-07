@@ -1215,7 +1215,7 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
   if(_socialAccountInfo){
     return res.status(501).send({errType:"Wrong Application", errorMessage:"This user already applied the social trading Account"});
   }
-  
+
   let socialAccount = new SocialAccount({
     email: email, 
     accountUuid:      accountUuid, 
@@ -1283,17 +1283,17 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
 }
 
 exports.getSocialTradingAccountInfo = async (req, res, next)=>{
-  const email = req.query.email; 
-  const accountUuid = req.query.accountUuid; 
+
+  const email = req.body.params.email; 
+  const accountUuid = req.body.params.accountUuid; 
+  console.log("request info:", email, accountUuid);
   SocialAccount.findOne({email:email, accountUuid:accountUuid}, function(err, result){
     if(err){
-      return res.status(500).send("Server Error:", err);
+      return res.status(500).send({errType: "Server Error", errorMessage: err.toString()});
     }
     return res.status(200).send({socialAccountInfo: result}); 
   })
-  console.log("social-account-infoo request:");
-  return res.status(200).send("result");
-  
+   
 }
 
 
