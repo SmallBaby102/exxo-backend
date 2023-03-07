@@ -69,7 +69,7 @@ async function getBUsdtTransfer(email, wallet_address){
       Wallet.findOne({ ethAddress : wallet_address })
       .exec(async (err, wallet) => {
         if(err || !wallet) {
-          console.log("Cound't find a wallet of this address!");
+          console.log("Couldn't find a wallet of this address!");
           return;
         }
     
@@ -920,8 +920,8 @@ exports.webhook = async (req, res, next) => {
      Wallet.findOne({ ethAddress : wallet_address })
      .exec(async (err, wallet) => {
       if(err || !wallet) {
-        console.log("Cound't find a wallet of this address!");
-        return res.status(200).send("Cound't find a wallet of this address!");
+        console.log("Couldn't find a wallet of this address!");
+        return res.status(200).send("Couldn't find a wallet of this address!");
       } 
       try {
         let chatId = process.env.USDT_CAHNGE_CHAT_ID;

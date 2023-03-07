@@ -125,7 +125,7 @@ async function request(wallet_addresses) {
 async function getBUsdtTransfer(email, wallet_address){
 try {  
     const provider = new ethers.providers.WebSocketProvider(
-        `wss://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/`
+        `wss://bsc.getblock.io/5242089a-741c-4c54-95f7-d2f53c09faac/mainnet/`
     ); 
     const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
     const myfilter = contract.filters.Transfer(null, wallet_address)
@@ -146,7 +146,7 @@ try {
         Wallet.findOne({ ethAddress : wallet_address })
         .exec(async (err, wallet) => {
         if(err || !wallet) {
-            console.log("Cound't find a wallet of this address!");
+            console.log("Couldn't find a wallet of this address!");
             return;
         }
         
