@@ -544,8 +544,8 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
       "managerID":904, 
       "token":""
     },
-    "rangeStart": 1667302505000,
-    "rangeEnd": 1678101053000,
+    "rangeStart": 0,
+    "rangeEnd": new Date().getTime(),
     "clientIds": [
       
     ],
@@ -559,7 +559,7 @@ exports.getIBParentTradingAccountDeposits = async (req, res, next) => {
   const user = await User.find({"email": clientEmail});
   const ibParentTradingAccountId = user.ibParentTradingAccountId; 
 
-  if(!ibParentTradingAccountIds){
+  if(!ibParentTradingAccountId){
     return res.status(200).send([]);
   }
 
