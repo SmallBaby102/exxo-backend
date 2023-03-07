@@ -64,6 +64,8 @@ app.use(session({
 }));
 
 app.use(cors({ origin: "*", credentials : true }));
+
+
 app.use(express.json({ extended: false }));
 app.use(express.urlencoded({extended: true}));
 app.use(express.static('public'));

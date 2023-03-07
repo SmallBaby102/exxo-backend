@@ -1213,9 +1213,9 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
   SocialAccount.save({
     email: email, 
     accountUuid:      accountUuid, 
-    hasWebsite:       socialAccountInfo.hasWebsite,
-    hasClientBase:    socialAccountInfo.hasClientBase,
-    shareTradingPerformance:  socialAccountInfo.shareTradingPerformance,
+    hasWebsite:       socialAccountInfo.hasWebsite || false,
+    hasClientBase:    socialAccountInfo.hasClientBase || false,
+    shareTradingPerformance:  socialAccountInfo.shareTradingPerformance || false,
     promoteContent:           socialAccountInfo.promoteContent,
     tradingInstruments:       socialAccountInfo.tradingInstruments, 
     tradingAccountForScoial:  socialAccountInfo.tradingAccountForScoial, 
@@ -1282,6 +1282,7 @@ exports.getSocialTradingAccountInfo = async (req, res, next)=>{
     return res.status(200).send({socialAccountInfo: result}); 
   })
   console.log("social-account-infoo request:");
+  return res.status(200).send("result");
   
 }
 
