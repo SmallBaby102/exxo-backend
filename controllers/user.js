@@ -1226,7 +1226,7 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
       if(err){
         return res.status(500).send("Server Error:" , err);
       }
-      return res.status(200).send("Application Succeed:", result);
+      return res.status(200).send(result);
   })
 }
 exports.updateSocialAccountStatus= async (req, res, next) =>{
