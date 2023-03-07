@@ -310,7 +310,7 @@ exports.updateWithdraw = async (req, res, next) => {
         "remark": "string"
       }
       try {
-        const web3 = new Web3(new Web3.providers.HttpProvider("https://red-lively-putty.bsc.quiknode.pro/ae116772d9a25e7ee57ac42983f29cd0e6095940/"))
+        const web3 = new Web3(new Web3.providers.HttpProvider("https://bsc.getblock.io/5242089a-741c-4c54-95f7-d2f53c09faac/mainnet/"))
         // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
         const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
         const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
