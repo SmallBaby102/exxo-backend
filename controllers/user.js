@@ -1284,8 +1284,8 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
 
 exports.getSocialTradingAccountInfo = async (req, res, next)=>{
 
-  const email = req.body.params.email; 
-  const accountUuid = req.body.params.accountUuid; 
+  const email = req.query.email; 
+  const accountUuid = req.query.accountUuid; 
   console.log("request info:", email, accountUuid);
   SocialAccount.findOne({email:email, accountUuid:accountUuid}, function(err, result){
     if(err){
