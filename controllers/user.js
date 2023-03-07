@@ -1210,7 +1210,7 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
   const socialAccountInfo = req.query.socialAccountInfo; 
 
   const sStatus = "Pending"; 
-  SocialAccount.save({
+  let socialAccount = new SocialAccount({
     email: email, 
     accountUuid:      accountUuid, 
     hasWebsite:       socialAccountInfo.hasWebsite || false,
@@ -1221,7 +1221,8 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
     tradingAccountForScoial:  socialAccountInfo.tradingAccountForScoial, 
     incentiveFeePercentage:   socialAccountInfo.incentiveFeePercentage, 
     sStatus:                  sStatus
-  }, function(err, result){
+  });
+  socialAccount.save(function(err, result){
       if(err){
         return res.status(500).send("Server Error:" , err);
       }
