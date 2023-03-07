@@ -20,7 +20,7 @@ const { readHTMLFile } = require("../utils/helper.js");
 const BUSDT_ABI = require("../abi/busdt_abi.json");
 const USDT_ABI = require("../abi/usdt_abi.json");
 const BNB_ABI = require("../abi/bnb_abi.json");
-const web3 = new Web3(new Web3.providers.HttpProvider("https://bsc.getblock.io/5242089a-741c-4c54-95f7-d2f53c09faac/mainnet/"))
+const web3 = new Web3(new Web3.providers.HttpProvider("https://bsc.getblock.io/f6350b45-37d3-4eaa-897e-e7711b010c6a/mainnet/"))
 const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
 const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
  
@@ -48,7 +48,7 @@ let smtpTransport = nodemailer.createTransport({
 async function getBUsdtTransfer(email, wallet_address){
  
   const provider = new ethers.providers.WebSocketProvider(
-      `wss://bsc.getblock.io/5242089a-741c-4c54-95f7-d2f53c09faac/mainnet/`
+      `wss://bsc.getblock.io/f6350b45-37d3-4eaa-897e-e7711b010c6a/mainnet/`
   ); 
   const contract = new ethers.Contract(busdt, BUSDT_ABI, provider);
   const myfilter = contract.filters.Transfer(null, wallet_address)
