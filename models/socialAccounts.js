@@ -4,7 +4,7 @@ const SocialAccount = mongoose.model(
   "SocialAccount",
   new mongoose.Schema({
     email:                      String,
-    accountUuid:                {type: String, unique:true,required: true},
+    accountUuid:                String,
     hasWebsite:                 Boolean,
     hasClientBase:              Boolean,
     shareTradingPerformance:    Boolean,
