@@ -317,6 +317,25 @@ exports.updateWithdraw = async (req, res, next) => {
         "currency": "USD",
         "remark": "string"
       }
+
+      axios.get(`${process.env.API_SERVER}/api/trading-accounts/${req.body.tradingAccountUuid}`)
+      .then(res=>{
+          const systemUuid = res.data.systemUuid; 
+          const offerUuid = res.data.offerUuid; 
+          axios.get(`${process.env.API_SERVER}/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${req.body.tradingAccountId}/balance`)
+          .then(result =>{
+            const balance = result.data.balance; 
+            const msgTxt = `${amount} USDT for "trading account id" request. Withdrawable Amount: ${balance}`
+            global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgTxt);
+          })
+          .catch(e=>{
+
+          });
+      })
+      .catch(e=>{
+        
+      })
+
       try {
         const web3 = new Web3(new Web3.providers.HttpProvider("https://bsc.getblock.io/5498f18d-9710-406a-9df9-851061d9465b/mainnet/"))
         // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
