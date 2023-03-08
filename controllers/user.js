@@ -1292,6 +1292,7 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
 exports.getSocialTradingAccountInfo = async (req, res, next)=>{
 
   const email = req.query.id; 
+  
   SocialAccount.findOne({_id, id}, function(err, result){
     if(err){
       return res.status(500).send({errType: "Server Error", errorMessage: err.toString()});
