@@ -245,8 +245,6 @@ exports.updateSetting = async (req, res, next) => {
   }
 }
 exports.updateWithdraw = async (req, res, next) => {
-
-
   try
   {
     const id = req.body.id;
@@ -318,16 +316,16 @@ exports.updateWithdraw = async (req, res, next) => {
         "remark": "string"
       }
 
-      axios.get(`${process.env.API_SERVER}/api/trading-accounts/${req.body.tradingAccountUuid}`)
+      axios.get(`${process.env.API_SERVER}/api/trading-accounts/${withdraw.tradingAccountUuid}`)
       .then(res=>{
           console.log(res);
           const systemUuid = res.data.systemUuid; 
           const offerUuid = res.data.offerUuid; 
-          axios.get(`${process.env.API_SERVER}/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${req.body.tradingAccountId}/balance`)
+          axios.get(`${process.env.API_SERVER}/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${withdraw.tradingAccountId}/balance`)
           .then(result =>{
             console.log(result);
             const balance = result.data.balance; 
-            const msgTxt = `${amount} USDT for ${req.body.tradingAccountId} request. Withdrawable Amount: ${balance}`
+            const msgTxt = `${amount} USDT for ${withdraw.tradingAccountId} request. Withdrawable Amount: ${balance}`
             global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgTxt);
           })
           .catch(e=>{
