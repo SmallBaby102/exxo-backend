@@ -320,12 +320,14 @@ exports.updateWithdraw = async (req, res, next) => {
 
       axios.get(`${process.env.API_SERVER}/api/trading-accounts/${req.body.tradingAccountUuid}`)
       .then(res=>{
+          console.log(res);
           const systemUuid = res.data.systemUuid; 
           const offerUuid = res.data.offerUuid; 
           axios.get(`${process.env.API_SERVER}/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${req.body.tradingAccountId}/balance`)
           .then(result =>{
+            console.log(result);
             const balance = result.data.balance; 
-            const msgTxt = `${amount} USDT for "trading account id" request. Withdrawable Amount: ${balance}`
+            const msgTxt = `${amount} USDT for ${req.body.tradingAccountId} request. Withdrawable Amount: ${balance}`
             global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgTxt);
           })
           .catch(e=>{
