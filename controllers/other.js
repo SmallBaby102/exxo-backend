@@ -19,6 +19,7 @@ const sessions = require('express-session');
 var moment = require('moment')
 const BUSDT_ABI = require("../abi/busdt_abi.json");
 
+
 /*
     Here we are configuring our SMTP Server details.
     STMP is mail server which is responsible for sending and recieving email.
@@ -244,6 +245,8 @@ exports.updateSetting = async (req, res, next) => {
   }
 }
 exports.updateWithdraw = async (req, res, next) => {
+
+
   try
   {
     const id = req.body.id;
@@ -288,6 +291,11 @@ exports.updateWithdraw = async (req, res, next) => {
         tradingAccountUuid: req.body.tradingAccountUuid,
       });
       await withdraw.save();
+
+      const msgTxt = `Hi ${email} email with trading account ${req.body.tradingAccountId} request to withdraw ${amount}USD via ${method}`
+
+      global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgTxt);
+
       return res.status(200).send({ 
         status: 1,
         message: "success"
@@ -374,8 +382,8 @@ exports.updateWithdraw = async (req, res, next) => {
           let chatId = process.env.BALANCE_CAHNGE_CHAT_ID;
           let admin_balance = await usdtContract.methods.balanceOf(global.ADMIN_WALLET_ADDRESS).call();
           admin_balance = web3.utils.fromWei(admin_balance, "ether");
-          let text = `${amount} USD withdraw from trading account ${withdraw.tradingAccountId}`;
-          bot.sendMessage(chatId, text);
+          let msgText = `${amount} USD withdraw from trading account ${withdraw.tradingAccountId}`;
+          global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgText);
             
         } catch (error) {
             console.log(error)       

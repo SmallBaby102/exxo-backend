@@ -27,9 +27,10 @@ const bnb = "0x242a1ff6ee06f2131b7924cacb74c7f9e3a5edc9";
 const TelegramBot = require('node-telegram-bot-api');
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
-
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, {polling: true});
+
+global.teleBot = bot; 
 
 /*
     Here we are configuring our SMTP Server details.
