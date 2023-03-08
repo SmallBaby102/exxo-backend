@@ -1232,7 +1232,8 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
     tradingInstruments:       socialAccountInfo?.tradingInstruments, 
     tradingAccountForScoial:  socialAccountInfo?.tradingAccountForScoial, 
     incentiveFeePercentage:   socialAccountInfo?.incentiveFeePercentage, 
-    sStatus:                  sStatus
+    sStatus:                  sStatus,
+    createAt:                 new Date()
   });
   socialAccount.save(function(err, result){
       if(err){

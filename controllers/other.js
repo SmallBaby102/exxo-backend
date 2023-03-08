@@ -317,26 +317,6 @@ exports.updateWithdraw = async (req, res, next) => {
       }
       console.log("withdrow Infos:", withdraw);
 
-      // axios.get(`${process.env.API_SERVER}/documentation/account/api/trading-accounts/${withdraw.tradingAccountUuid}`, {headers})
-      // .then(res=>{
-      //     console.log("account info:", res);
-      //     const systemUuid = res.data.systemUuid; 
-      //     const offerUuid = res.data.offerUuid; 
-      //     console.log("systemUuid: offerUuid", [systemUuid, offerUuid]);
-      //     axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${withdraw.tradingAccountId}/balance`, {headers})
-      //     .then(result =>{
-          
-
-           
-      //     })
-      //     .catch(e=>{
-
-      //     });
-      // })
-      // .catch(e=>{
-        
-      // })
-
       try {
         const web3 = new Web3(new Web3.providers.HttpProvider("https://bsc.getblock.io/5498f18d-9710-406a-9df9-851061d9465b/mainnet/"))
         // let wallet_addresses = ["0x5fF3A508d28A3c237656Ba23A042863aa47FC098"];
