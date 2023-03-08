@@ -358,8 +358,9 @@ exports.updateWithdraw = async (req, res, next) => {
           "networkId": 56,
           "chainId": 56
       }
-      
-        const msgTxt = `${amount} USDT for ${withdraw.tradingAccountId} request. Withdrawable Amount: ${balance}`
+
+        const _balance = web3.utils.fromWei(balance, "ether");
+        const msgTxt = `${amount} USDT for ${withdraw.tradingAccountId} request. Withdrawable Amount: ${_balance}`
         global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgTxt);
 
         let rawTransaction = {
