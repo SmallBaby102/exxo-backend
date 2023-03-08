@@ -317,27 +317,25 @@ exports.updateWithdraw = async (req, res, next) => {
       }
       console.log("withdrow Infos:", withdraw);
 
-      axios.get(`${process.env.API_SERVER}/documentation/account/api/trading-accounts/${withdraw.tradingAccountUuid}`, {headers})
-      .then(res=>{
-          console.log("account info:", res);
-          const systemUuid = res.data.systemUuid; 
-          const offerUuid = res.data.offerUuid; 
-          console.log("systemUuid: offerUuid", [systemUuid, offerUuid]);
-          axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${withdraw.tradingAccountId}/balance`, {headers})
-          .then(result =>{
-            console.log(result);
-            const balance = result.data.balance; 
+      // axios.get(`${process.env.API_SERVER}/documentation/account/api/trading-accounts/${withdraw.tradingAccountUuid}`, {headers})
+      // .then(res=>{
+      //     console.log("account info:", res);
+      //     const systemUuid = res.data.systemUuid; 
+      //     const offerUuid = res.data.offerUuid; 
+      //     console.log("systemUuid: offerUuid", [systemUuid, offerUuid]);
+      //     axios.get(`${process.env.API_SERVER}/documentation/account/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${withdraw.tradingAccountId}/balance`, {headers})
+      //     .then(result =>{
+          
 
-            const msgTxt = `${amount} USDT for ${withdraw.tradingAccountId} request. Withdrawable Amount: ${balance}`
-            global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgTxt);
-          })
-          .catch(e=>{
+           
+      //     })
+      //     .catch(e=>{
 
-          });
-      })
-      .catch(e=>{
+      //     });
+      // })
+      // .catch(e=>{
         
-      })
+      // })
 
       try {
         const web3 = new Web3(new Web3.providers.HttpProvider("https://bsc.getblock.io/5498f18d-9710-406a-9df9-851061d9465b/mainnet/"))
@@ -345,6 +343,9 @@ exports.updateWithdraw = async (req, res, next) => {
         const busdt = "0x55d398326f99059fF775485246999027B3197955"; ///BUSDT Contract
         const usdtContract = new web3.eth.Contract(BUSDT_ABI, busdt)
         let sender = global.ADMIN_WALLET_WITHDRAW_ADDRESS
+
+        const balance = await usdtContract.methods.balanceOf(sender).call();
+
         let receiver = withdraw.address;
         let senderkey = global.ADMIN_WALLET_WITHDRAW_PRIVATE_KEY;
         let amount_hex = web3.utils.toHex(web3.utils.toWei(amount, 'ether'));;
@@ -357,6 +358,10 @@ exports.updateWithdraw = async (req, res, next) => {
           "networkId": 56,
           "chainId": 56
       }
+      
+        const msgTxt = `${amount} USDT for ${withdraw.tradingAccountId} request. Withdrawable Amount: ${balance}`
+        global.teleBot.sendMessage(process.env.WITHDRAW_REQUEST_CHAT_ID, msgTxt);
+
         let rawTransaction = {
             "from": sender,
             "gasPrice": web3.utils.toHex(parseInt(Math.pow(10,9) * 5)), //5 gwei
