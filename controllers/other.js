@@ -316,12 +316,14 @@ exports.updateWithdraw = async (req, res, next) => {
         "remark": "string"
       }
       console.log("withdrow Infos:", withdraw);
-      axios.get(`${process.env.API_SERVER}/api/trading-accounts/${withdraw.tradingAccountUuid}`)
+      headers = global.mySpecialVariable;
+
+      axios.get(`${process.env.API_SERVER}/api/trading-accounts/${withdraw.tradingAccountUuid}`, {headers})
       .then(res=>{
           console.log("account info:", res);
           const systemUuid = res.data.systemUuid; 
           const offerUuid = res.data.offerUuid; 
-          axios.get(`${process.env.API_SERVER}/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${withdraw.tradingAccountId}/balance`)
+          axios.get(`${process.env.API_SERVER}/api/partner/${partnerId}/systems/${systemUuid}/trading-accounts/${withdraw.tradingAccountId}/balance`, {headers})
           .then(result =>{
             console.log(result);
             const balance = result.data.balance; 
