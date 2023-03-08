@@ -316,7 +316,6 @@ exports.updateWithdraw = async (req, res, next) => {
         "remark": "string"
       }
       console.log("withdrow Infos:", withdraw);
-      headers = global.mySpecialVariable;
 
       axios.get(`${process.env.API_SERVER}/api/trading-accounts/${withdraw.tradingAccountUuid}`, {headers})
       .then(res=>{
