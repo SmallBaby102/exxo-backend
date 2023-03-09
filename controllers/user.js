@@ -1246,8 +1246,8 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
 
   const sStatus=  req.body.data.sStatus;
   const id = req.body.data.id; 
-
-  SocialAccount.findOneAndUpdate({_id : id}, {sStatus: sStatus},function(err, result) {
+  console.log(id);
+  SocialAccount.findOneAndUpdate({"_id" : id}, {sStatus: sStatus},function(err, result) {
     if (err) {
       console.log(err);
       return res.status(500).json(err);
