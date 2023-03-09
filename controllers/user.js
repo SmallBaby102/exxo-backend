@@ -1244,6 +1244,8 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
 }
 exports.updateSocialAccountStatus= async (req, res, next) =>{
 
+  console.log(req);
+  
   const sStatus=  req.body.data.sStatus;
   const id = req.body.data.id; 
   console.log(id);
