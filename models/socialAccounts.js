@@ -10,7 +10,7 @@ const SocialAccount = mongoose.model(
     shareTradingPerformance:    Boolean,
     promoteContent:             String,
     tradingInstruments:         Number, 
-    tradingAccountForScoial:    String, 
+    tradingAccountForSocial:    String, 
     incentiveFeePercentage:     Number, 
     sStatus:                    {type:String, default:"NEW"},
     createAt:                   {type:Date, default: new Date()}
