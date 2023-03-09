@@ -1276,7 +1276,7 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : email,
             bcc:process.env.MAIL_USERNAME, 
-            subject : "Social trading account application " + ( ibStatus === "Approved"?"approved":"decline") ,
+            subject : "Social trading account application " + ( sStatus === "Approved"?"approved":"decline") ,
             html : htmlToSend
         };
         smtpTransport.sendMail(mailOptions, function(error, response){
