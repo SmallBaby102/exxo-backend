@@ -1245,9 +1245,9 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
 exports.updateSocialAccountStatus= async (req, res, next) =>{
 
   console.log(req);
-  
-  const sStatus=  req.body.data.sStatus;
-  const id = req.body.data.id; 
+
+  const sStatus=  req.body.sStatus;
+  const id = req.body.id; 
   console.log(id);
   SocialAccount.findOneAndUpdate({"_id" : id}, {sStatus: sStatus},function(err, result) {
     if (err) {
