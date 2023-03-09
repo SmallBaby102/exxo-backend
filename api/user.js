@@ -7,6 +7,7 @@
      requestIB, cancelIB, IBClients, updateIBStatus, getOwnIBClients, IBClientDetail,
      getIBParentTradingAccountDeposits, 
      getSocialTradingAccountInfo,
+     getSocialTradingAccountInfoWithId,
      getSocialTradingAccountInfoAll,
      registerSocialTradingFeed,
      updateSocialAccountStatus} = require("../controllers/user");
