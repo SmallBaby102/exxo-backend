@@ -1244,8 +1244,8 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
 }
 exports.updateSocialAccountStatus= async (req, res, next) =>{
   const sStatus=  req.body.data.sStatus;
-  const accountUuid = req.body.data.accountUuid; 
-  SocialAccount.findOneAndUpdate({accountUuid}, {sStatus: sStatus},function(err, result) {
+  const accountUuid = req.body.data.id; 
+  SocialAccount.findOneAndUpdate({_id : id}, {sStatus: sStatus},function(err, result) {
     if (err) {
       console.log(err);
       return res.status(500).json(err);
