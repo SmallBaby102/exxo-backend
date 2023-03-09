@@ -86,7 +86,7 @@ exports.getWithdraw = async (req, res, next) => {
     if (req.query.email) {
       withdraws = await Withdraw.find({email : req.query.email});
     } else {
-      withdraws = await Withdraw.find({}).sort({createdAt: 'desc'});
+      withdraws = await Withdraw.find({}).sort({submittedAt: 'desc'});
     }
     return res.status(200).send(withdraws);
   } catch (error) {
