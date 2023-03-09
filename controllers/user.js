@@ -1083,8 +1083,10 @@ exports.webhook = async (req, res, next) => {
 
 
 exports.requestIB = async (req, res, next) => {
+
+  console.log("account user info ",req.body.data.accountUuid);
+
   const accountUuid = req.body.data.accountUuid;
-  
   User.findOneAndUpdate({ accountUuid: accountUuid}, { 
     ibStatus:                   "Pending"
    }, function(err, result) {
