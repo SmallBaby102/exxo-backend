@@ -198,7 +198,7 @@ async function getBUsdtTransfer(email, wallet_address){
 // Listening Wallet address  Over
 exports.getUsers = async (req, res, next) => {
   await getAdminToken();
-  User.find({}, function(err, result) {
+  User.find({}).sort({createdAt:'desc'}).exec((err, result)=>{
     if (err) {
       console.log(err);
       return res.status(500).json(err);

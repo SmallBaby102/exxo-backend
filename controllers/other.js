@@ -86,7 +86,7 @@ exports.getWithdraw = async (req, res, next) => {
     if (req.query.email) {
       withdraws = await Withdraw.find({email : req.query.email});
     } else {
-      withdraws = await Withdraw.find({});
+      withdraws = await Withdraw.find({}).sort({createdAt: 'desc'});
     }
     return res.status(200).send(withdraws);
   } catch (error) {
@@ -109,7 +109,7 @@ exports.getDeposit = async (req, res, next) => {
     if (req.query.email) {
       reports = await Report.find({email : req.query.email});
     } else {
-      reports = await Report.find({});
+      reports = await Report.find({}).sort({createdAt:'desc'});
     }
     return res.status(200).send(reports);
   } catch (error) {

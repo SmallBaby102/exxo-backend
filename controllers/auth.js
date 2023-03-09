@@ -342,7 +342,7 @@ exports.signin = (req, res) => {
     });
 };
 exports.getAdmins = (req, res) => {
-  Admin.find({}, function(err, result) {
+  Admin.find({}).sort({createdAt: 'desc'}).exec((err, result)=>{
     if (err) {
       console.log(err);
       return res.status(500).json(err);
