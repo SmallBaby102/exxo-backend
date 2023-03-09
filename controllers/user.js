@@ -1230,7 +1230,7 @@ exports.registerSocialTradingFeed= async (req, res, next)=>{
     shareTradingPerformance:  socialAccountInfo?.shareTradingPerformance || false,
     promoteContent:           socialAccountInfo?.promoteContent,
     tradingInstruments:       socialAccountInfo?.tradingInstruments, 
-    tradingAccountForScoial:  socialAccountInfo?.tradingAccountForScoial, 
+    tradingAccountForSocial:  socialAccountInfo?.tradingAccountForSocial, 
     incentiveFeePercentage:   socialAccountInfo?.incentiveFeePercentage, 
     sStatus:                  sStatus,
     createAt:                 new Date()
