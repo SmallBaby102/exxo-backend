@@ -34,6 +34,7 @@
  router.get("/own-ib-clients", [ authJwt.verifyToken ], getOwnIBClients);
  router.get("/ib-parent-trading-account-deposits", [ authJwt.verifyToken ], getIBParentTradingAccountDeposits);
  router.get("/social-account-info",[ authJwt.verifyToken ], getSocialTradingAccountInfo ); 
+ router.get("/social-account-info-with-id",[ authJwt.verifyToken ], getSocialTradingAccountInfoWithId ); 
  router.put("/social-account-info", [ authJwt.verifyToken ], registerSocialTradingFeed); 
  router.post("/social-account-info", [ authJwt.verifyToken ], updateSocialAccountStatus); 
  router.get("/social-account-all",[ authJwt.verifyToken ], getSocialTradingAccountInfoAll);
