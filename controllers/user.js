@@ -1276,7 +1276,7 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
             from: `${process.env.MAIL_NAME} <${process.env.MAIL_USERNAME}>`,
             to : email,
             bcc:process.env.MAIL_USERNAME, 
-            subject : "Social trading account application " + ( sStatus === "Approved"?"approved":"decline") ,
+            subject : "Social trading account application " + ( sStatus === "Approved"?"approved":"declined") ,
             html : htmlToSend
         };
         smtpTransport.sendMail(mailOptions, function(error, response){
@@ -1294,7 +1294,7 @@ exports.updateSocialAccountStatus= async (req, res, next) =>{
 
 exports.getSocialTradingAccountInfo = async (req, res, next)=>{
 
-  const id = req.query.id; 
+  const id = req.query.params.id; 
   
   SocialAccount.findOne({_id: id}, function(err, result){
     if(err){
