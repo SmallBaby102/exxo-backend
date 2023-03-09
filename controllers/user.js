@@ -1320,11 +1320,11 @@ exports.getSocialTradingAccountInfoWithId = async (req, res, next)=>{
 }
 
 exports.getSocialTradingAccountInfoAll = async (req, res, next)=>{
-  SocialAccount.find({}, function(err, result){
+  SocialAccount.find({}).sort({createAt: 'desc'}).exec((err, result)=>{
     if(err){
       return res.status(500).send(err);
     }
     return res.status(200).send(result); 
-  })
+  });
 }
 
