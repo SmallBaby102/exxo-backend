@@ -35,7 +35,7 @@ exports.signup = async (req, res) => {
       console.log("IB parent acount info", parentAccount);
       if(parentAccount  &&  parentAccount.ibStatus){
         
-        let untilDate = ibLinkCookie.when;
+        let untilDate = new Date(ibLinkCookie.when);
         const today= new Date(); 
         untilDate.setDate(untilDate.getDate()+ 30);
         console.log("today is ", today);
