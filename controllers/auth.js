@@ -23,11 +23,23 @@ let smtpTransport = nodemailer.createTransport({
 });
 /*------------------SMTP Over-----------------------------*/
 
-exports.signup = (req, res) => {
+exports.signup = async (req, res) => {
   try {
-    const parentTradingAccountId    = req.body.ibid?req.body.ibid:""; 
-    const parentTradingAccountUuid  = req.body.ibuuid?req.body.ibuuid:"";
-
+    let parentTradingAccountId, parentTradingAccountUuid ;
+    const ibLinkCookie = req.body.ibLinkCookie || null;
+    if(ibLinkCookie){
+      const cookieInfo = JSON.parse(ibLinkCookie); 
+      const parentAccount =await User.findOne({accountUuid: cookieInfo.ibLinkId}); 
+      if(parentAccount  &&  parentAccount.ibStatus){
+        const today= (new Date()).now(); 
+        let untilDate = ibLinkCookie.when;
+        untilDate.setDate(until.getDate()+ 30);
+        if(untilDate.getTime() < today.getTime()){
+          parentTradingAccountId = parentAccount?.ibParentTradingAccountId; 
+          parentTradingAccuntUuid = parentAccount?.ibParentTradingAccountUuid; 
+        }
+      }
+    }
     let user = new User({
       fullname:                   req.body.fullname,
       email:                      req.body.email,
@@ -77,9 +89,7 @@ exports.signup = (req, res) => {
     });
   } catch (error) {
     res.status(500).send("User register failed.");
-    
   }
-
 };
 exports.resetLink = (req, res) => {
   try {
@@ -182,7 +192,7 @@ exports.verifyEmail = async (req, res) => {
       console.log(result);
       headers = {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${result.data.access_token}`,
+          "Authorization": `Bearer ${result.data.access_token}`,  
           "Cookie": "JSESSIONID=93AD5858240894B517A4B1A2ADC27617"
       }
       global.mySpecialVariable = headers;

@@ -35,7 +35,7 @@ const User = mongoose.model(
     IBLink:                     { type: String, default: "" },
     IBDeclineReason:            { type: String, default: "" },
     ibSubmittedAt:              {type: Date, default: Date.now},
-  
+    ibNumber:                   Number,
   })
 );
 

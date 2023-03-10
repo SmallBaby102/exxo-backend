@@ -1089,7 +1089,7 @@ exports.requestIB = async (req, res, next) => {
   const accountUuid = req.body.data.accountUuid;
   User.findOneAndUpdate({ accountUuid: accountUuid}, { 
     ibStatus:                   "Pending"
-   }, function(err, result) {
+   }).exec((err, result)=>{
     if (err) {
       console.log(err);
       return res.status(500).json(err);
@@ -1141,7 +1141,11 @@ exports.updateIBStatus = async (req, res, next) => {
     ibParentTradingAccountId = wallet.data?.tradingAccountId;
   }
 
-  let IBLink = process.env.FRONT_ENTRY + "/register?ibid=" + ibParentTradingAccountId + "&ibuuid=" + ibParentTradingAccountUuid;
+  let lastIbClient =await User.findOne({}).sort({ibNumber : -1}).limit(1);
+  
+  const iblink_number =(lastIbClient?.ibNumber || 100000)+1; 
+
+  let IBLink = process.env.IB_LINK_ENTRY + "/ib/" + iblink_number;
 
   User.findOneAndUpdate({ _id: reqbody?.id}, { 
     ibStatus:                   ibStatus, 
@@ -1149,6 +1153,7 @@ exports.updateIBStatus = async (req, res, next) => {
     ibParentTradingAccountUuid: ibParentTradingAccountUuid, 
     IBLink:                     ibStatus === "Approved"?IBLink:"", 
     IBDeclineReason:            reqbody?.decline_reason, 
+    ibNumber:                   iblink_number
    }, function(err, result) {
     if (err) {
       console.log(err);
