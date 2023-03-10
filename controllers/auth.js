@@ -37,7 +37,7 @@ exports.signup = async (req, res) => {
         
         let untilDate = ibLinkCookie.when;
         const today= (new Date()).now(); 
-        untilDate.setDate(until.getDate()+ 30);
+        untilDate.setDate(untilDate.getDate()+ 30);
         console.log("today is ", today);
         console.log("until time is ", untilDate);
         if(untilDate.getTime() > today.getTime()){
@@ -52,8 +52,8 @@ exports.signup = async (req, res) => {
       countryCode:                req.body.countryCode,
       phone:                      req.body.phone,
       password:                   bcrypt.hashSync(req.body.password, 8),
-      parentTradingAccountId:     parentTradingAccountId,
-      parentTradingAccountUuid:   parentTradingAccountUuid,
+      parentTradingAccountId:     parentTradingAccountId | undefined,
+      parentTradingAccountUuid:   parentTradingAccountUuid | undefined,
     });
   
     user.save((err, user) => {
