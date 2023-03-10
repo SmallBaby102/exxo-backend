@@ -25,7 +25,8 @@ let smtpTransport = nodemailer.createTransport({
 
 exports.signup = async (req, res) => {
   try {
-    let parentTradingAccountId, parentTradingAccountUuid ;
+    let parentTradingAccountId ="";
+    let parentTradingAccountUuid ="";
 
     const ibLinkCookie = req.body.ibLinkCookie || null;
     console.log("Affiliate Cookie Info", ibLinkCookie);
@@ -41,9 +42,11 @@ exports.signup = async (req, res) => {
         if((cookieInfo.when + 30*24*3600*1000 > Date.now())){
           parentTradingAccountId = parentAccount?.ibParentTradingAccountId; 
           parentTradingAccountUuid = parentAccount?.ibParentTradingAccountUuid; 
+          console.log("parentTradingAccountUuid :--------", parentTradingAccountUuid)
         }
       }
     }
+
     let user = new User({
       fullname:                   req.body.fullname,
       email:                      req.body.email,
