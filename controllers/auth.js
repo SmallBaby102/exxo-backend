@@ -31,7 +31,8 @@ exports.signup = async (req, res) => {
     console.log("Affiliate Cookie Info", ibLinkCookie);
     if(ibLinkCookie){
       const cookieInfo = JSON.parse(ibLinkCookie); 
-      const parentAccount =await User.findOne({accountUuid: cookieInfo.ibLinkId}); 
+      const parentAccount =await User.findOne({ibNumber: cookieInfo.ibLinkId}); 
+      console.log("IB parent acount info", parentAccount);
       if(parentAccount  &&  parentAccount.ibStatus){
         const today= (new Date()).now(); 
         let untilDate = ibLinkCookie.when;
