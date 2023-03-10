@@ -34,10 +34,13 @@ exports.signup = async (req, res) => {
       const parentAccount =await User.findOne({ibNumber: cookieInfo.ibLinkId}); 
       console.log("IB parent acount info", parentAccount);
       if(parentAccount  &&  parentAccount.ibStatus){
-        const today= (new Date()).now(); 
+        
         let untilDate = ibLinkCookie.when;
+        const today= (new Date()).now(); 
         untilDate.setDate(until.getDate()+ 30);
-        if(untilDate.getTime() < today.getTime()){
+        console.log("today is ", today);
+        console.log("until time is ", untilDate);
+        if(untilDate.getTime() > today.getTime()){
           parentTradingAccountId = parentAccount?.ibParentTradingAccountId; 
           parentTradingAccuntUuid = parentAccount?.ibParentTradingAccountUuid; 
         }
