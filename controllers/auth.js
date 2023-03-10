@@ -36,7 +36,9 @@ exports.signup = async (req, res) => {
       if(parentAccount  &&  parentAccount.ibStatus){
         
         console.log(Date.now()); 
-        if((cookieInfo.when/1000 + 30*24*3600*1000 > Date.now())){
+        console.log(Number(cookieInfo.when) + 30*24*3600*1000);
+
+        if((cookieInfo.when + 30*24*3600*1000 > Date.now())){
           parentTradingAccountId = parentAccount?.ibParentTradingAccountId; 
           parentTradingAccountUuid = parentAccount?.ibParentTradingAccountUuid; 
         }
