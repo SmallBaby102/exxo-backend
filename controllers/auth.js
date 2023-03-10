@@ -53,6 +53,7 @@ exports.signup = async (req, res) => {
       parentTradingAccountId:     parentTradingAccountId | undefined,
       parentTradingAccountUuid:   parentTradingAccountUuid | undefined,
     });
+    console.log("Followed User's info",user);
   
     user.save((err, user) => {
       if (err) {
