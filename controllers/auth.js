@@ -95,6 +95,7 @@ exports.signup = async (req, res) => {
     });
   } catch (error) {
     res.status(500).send("User register failed.");
+    console.log("register faild error", error);
   }
 };
 exports.resetLink = (req, res) => {
