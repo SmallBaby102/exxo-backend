@@ -26,7 +26,9 @@ let smtpTransport = nodemailer.createTransport({
 exports.signup = async (req, res) => {
   try {
     let parentTradingAccountId, parentTradingAccountUuid ;
-    const ibLinkCookie = req.body.ibLinkCookie || null;
+
+    const ibLinkCookie = req.body.data.ibLinkCookie || null;
+    console.log("Affiliate Cookie Info", ibLinkCookie);
     if(ibLinkCookie){
       const cookieInfo = JSON.parse(ibLinkCookie); 
       const parentAccount =await User.findOne({accountUuid: cookieInfo.ibLinkId}); 
