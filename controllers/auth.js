@@ -53,8 +53,8 @@ exports.signup = async (req, res) => {
       countryCode:                req.body.countryCode,
       phone:                      req.body.phone,
       password:                   bcrypt.hashSync(req.body.password, 8),
-      parentTradingAccountId:     parentTradingAccountId | undefined,
-      parentTradingAccountUuid:   String(parentTradingAccountUuid) |  undefined,
+      parentTradingAccountId:     parentTradingAccountId ,
+      parentTradingAccountUuid:   parentTradingAccountUuid,
     });
     console.log("Followed User's info",user);
   
